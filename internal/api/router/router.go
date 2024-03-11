@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type FuncHandler func(w http.ResponseWriter, r *http.Request)
+type FuncHandler func(w http.ResponseWriter, r *http.Request) error
 
 type ApiRouterModule func(router *ApiRouter)
 
@@ -36,11 +36,22 @@ func (router *ApiRouter) SetRoute(
 ) {
 	route := fmt.Sprintf("%s %s%s", strings.ToUpper(method), router.RootPath, path)
 
-	router.Mux.HandleFunc(route, handler)
+	router.Mux.HandleFunc(route, httpHandler(handler))
 }
 
 func (router *ApiRouter) build() {
 	for _, fn := range router.modules {
 		fn(router)
+	}
+}
+
+func httpHandler(fn FuncHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := fn(w, r)
+		if err != nil {
+			status := http.StatusInternalServerError
+
+			http.Error(w, "Server error", status)
+		}
 	}
 }
