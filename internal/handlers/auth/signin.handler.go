@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -10,22 +12,31 @@ import (
 	"github.com/nahtann/go-authentication/internal/utils"
 )
 
-type SinginResponse struct {
+type SigninRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type SigninResponse struct {
 	Token string `json:"token"`
 }
 
 func Signin(w http.ResponseWriter, r *http.Request) error {
-	token, err := GenerateToken()
-	if err != nil {
-		apiError := utils.ApiError{
-			Status:  http.StatusInternalServerError,
-			Message: "Unable to sign in",
-		}
+	signinRequest := new(SigninRequest)
 
-		return utils.WriteJSON(w, http.StatusInternalServerError, apiError)
+	err := json.NewDecoder(r.Body).Decode(signinRequest)
+	if err != nil {
+		return defaultError(w)
 	}
 
-	response := SinginResponse{
+	fmt.Println(signinRequest)
+
+	token, err := GenerateToken()
+	if err != nil {
+		return defaultError(w)
+	}
+
+	response := SigninResponse{
 		Token: token,
 	}
 
@@ -48,4 +59,13 @@ func GenerateToken() (string, error) {
 	}
 
 	return token, nil
+}
+
+func defaultError(w http.ResponseWriter) error {
+	apiError := utils.ApiError{
+		Status:  http.StatusInternalServerError,
+		Message: "Unable to sign in",
+	}
+
+	return utils.WriteJSON(w, http.StatusInternalServerError, apiError)
 }
