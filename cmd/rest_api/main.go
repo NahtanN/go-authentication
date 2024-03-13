@@ -22,7 +22,7 @@ func RunServer() {
 		os.Exit(1)
 	}
 
-	// connect to the database
+	// database cononection pool
 	dbpool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
@@ -32,7 +32,7 @@ func RunServer() {
 
 	mux := http.NewServeMux()
 
-	apiRouter := router.NewApiRouter(mux, "/api")
+	apiRouter := router.NewApiRouter(mux, "/api", dbpool)
 
 	modules := []router.ApiRouterModule{modules.AuthModule}
 	apiRouter.SetModules(modules)

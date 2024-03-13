@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type FuncHandler func(w http.ResponseWriter, r *http.Request) error
@@ -14,12 +16,14 @@ type ApiRouter struct {
 	Mux      *http.ServeMux
 	RootPath string
 	modules  []ApiRouterModule
+	DB       *pgxpool.Pool
 }
 
-func NewApiRouter(mux *http.ServeMux, rootPath string) *ApiRouter {
+func NewApiRouter(mux *http.ServeMux, rootPath string, dbStorage *pgxpool.Pool) *ApiRouter {
 	return &ApiRouter{
 		Mux:      mux,
 		RootPath: rootPath,
+		DB:       dbStorage,
 	}
 }
 

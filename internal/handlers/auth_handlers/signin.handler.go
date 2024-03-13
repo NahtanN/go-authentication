@@ -1,4 +1,4 @@
-package auth
+package auth_handlers
 
 import (
 	"encoding/json"
@@ -26,14 +26,14 @@ func Signin(w http.ResponseWriter, r *http.Request) error {
 
 	err := json.NewDecoder(r.Body).Decode(signinRequest)
 	if err != nil {
-		return defaultError(w)
+		return utils.HttpServerError(w)
 	}
 
 	fmt.Println(signinRequest)
 
 	token, err := GenerateToken()
 	if err != nil {
-		return defaultError(w)
+		return utils.HttpServerError(w)
 	}
 
 	response := SigninResponse{
@@ -59,13 +59,4 @@ func GenerateToken() (string, error) {
 	}
 
 	return token, nil
-}
-
-func defaultError(w http.ResponseWriter) error {
-	apiError := utils.ApiError{
-		Status:  http.StatusInternalServerError,
-		Message: "Unable to sign in",
-	}
-
-	return utils.WriteJSON(w, http.StatusInternalServerError, apiError)
 }
