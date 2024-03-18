@@ -1,26 +1,17 @@
 package auth_handlers
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
+	"github.com/nahtann/go-authentication/internal/storage/database"
+	"github.com/nahtann/go-authentication/internal/storage/database/models"
 	"github.com/nahtann/go-authentication/internal/utils"
 )
 
-type UserModel struct {
-	Id       string `db:"id"`
-	Username string `db:"username"`
-	Email    string `db:"email"`
-	Password string `db:"password"`
-}
-
 type SignUpHttpHandler struct {
-	database *pgxpool.Pool
+	UserRepository database.UserRepository
 }
 
 type SignupRequest struct {
@@ -29,9 +20,9 @@ type SignupRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
-func NewSignUpHttpHandler(database *pgxpool.Pool) *SignUpHttpHandler {
+func NewSignUpHttpHandler(userRepository database.UserRepository) *SignUpHttpHandler {
 	return &SignUpHttpHandler{
-		database: database,
+		UserRepository: userRepository,
 	}
 }
 
@@ -45,7 +36,6 @@ func (handler *SignUpHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 		}
 
 		return utils.WriteJSON(w, http.StatusBadRequest, apiError)
-
 	}
 
 	errorMessages := utils.Validate(request)
@@ -57,7 +47,7 @@ func (handler *SignUpHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 		return utils.WriteJSON(w, http.StatusBadRequest, message)
 	}
 
-	err = SingUp(handler.database, request)
+	err = SingUp(handler.UserRepository, request)
 	if err != nil {
 		return utils.WriteJSON(w, http.StatusBadRequest, err)
 	}
@@ -69,10 +59,10 @@ func (handler *SignUpHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 	return utils.WriteJSON(w, http.StatusCreated, message)
 }
 
-func SingUp(database *pgxpool.Pool, request *SignupRequest) error {
+func SingUp(userRepository database.UserRepository, request *SignupRequest) error {
 	errorMessages := []string{}
 
-	usernameExists, err := UserExistsByColumn(database, "username", request.Username)
+	usernameExists, err := userRepository.UserExistsByColumn("username", request.Username)
 	if err != nil {
 		return err
 	}
@@ -81,7 +71,7 @@ func SingUp(database *pgxpool.Pool, request *SignupRequest) error {
 		errorMessages = append(errorMessages, "Username already in use.")
 	}
 
-	emailExists, err := UserExistsByColumn(database, "email", request.Email)
+	emailExists, err := userRepository.UserExistsByColumn("email", request.Email)
 	if err != nil {
 		return err
 	}
@@ -96,43 +86,14 @@ func SingUp(database *pgxpool.Pool, request *SignupRequest) error {
 		}
 	}
 
-	query := "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)"
-	_, err = database.Exec(
-		context.Background(),
-		query,
-		request.Username, request.Email, request.Password,
-	)
+	err = userRepository.Create(&models.UserModel{
+		Username: request.Username,
+		Email:    request.Email,
+		Password: request.Password,
+	})
 	if err != nil {
-		return &utils.CustomError{
-			Message: "Unable to create user.",
-		}
+		return err
 	}
 
 	return nil
-}
-
-func UserExistsByColumn(database *pgxpool.Pool, column, value string) (bool, error) {
-	valid := utils.ModelHasColumn(UserModel{}, column)
-
-	if !valid {
-		return false, &utils.CustomError{
-			Message: "Model invalid.",
-		}
-	}
-
-	query := fmt.Sprintf(
-		"SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(%s) LIKE LOWER($1))",
-		column,
-	)
-
-	var exists bool
-
-	err := database.QueryRow(context.Background(), query, value).Scan(&exists)
-	if err != nil {
-		return false, &utils.CustomError{
-			Message: "Unable to validate user.",
-		}
-	}
-
-	return exists, nil
 }
