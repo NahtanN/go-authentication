@@ -15,3 +15,11 @@ func HttpServerError(w http.ResponseWriter) error {
 
 	return WriteJSON(w, http.StatusInternalServerError, message)
 }
+
+func HttpServerInvalidRequest(w http.ResponseWriter) error {
+	message := DefaultResponse{
+		Message: "Invalid Request",
+	}
+
+	return WriteJSON(w, http.StatusInternalServerError, message)
+}

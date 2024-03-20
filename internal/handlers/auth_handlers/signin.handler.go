@@ -9,38 +9,86 @@ import (
 
 	"github.com/golang-jwt/jwt"
 
+	"github.com/nahtann/go-authentication/internal/storage/database"
+	"github.com/nahtann/go-authentication/internal/storage/database/models"
 	"github.com/nahtann/go-authentication/internal/utils"
 )
 
+type SignInHttpHandler struct {
+	UserRepository database.UserRepository
+}
+
 type SigninRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	User     string `json:"user"     validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 type SigninResponse struct {
 	Token string `json:"token"`
 }
 
-func Signin(w http.ResponseWriter, r *http.Request) error {
-	signinRequest := new(SigninRequest)
+func NewSignInHttpHandler(userRepository database.UserRepository) *SignInHttpHandler {
+	return &SignInHttpHandler{
+		UserRepository: userRepository,
+	}
+}
 
-	err := json.NewDecoder(r.Body).Decode(signinRequest)
+func (handler *SignInHttpHandler) Serve(w http.ResponseWriter, r *http.Request) error {
+	request := new(SigninRequest)
+
+	err := json.NewDecoder(r.Body).Decode(request)
 	if err != nil {
-		return utils.HttpServerError(w)
+		return utils.HttpServerInvalidRequest(w)
 	}
 
-	fmt.Println(signinRequest)
+	errorMessages := utils.Validate(request)
+	if errorMessages != "" {
+		message := utils.DefaultResponse{
+			Message: errorMessages,
+		}
+
+		return utils.WriteJSON(w, http.StatusBadRequest, message)
+	}
+
+	token, err := SignIn(handler.UserRepository, request)
+	if err != nil {
+		return utils.WriteJSON(w, http.StatusInternalServerError, err)
+	}
+
+	return utils.WriteJSON(w, http.StatusCreated, SigninResponse{
+		Token: token,
+	})
+}
+
+func SignIn(userRepository database.UserRepository, request *SigninRequest) (string, error) {
+	result, err := userRepository.FindFirst(&models.UserModel{
+		Username: request.User,
+		Email:    request.User,
+	}).Select(models.UserModel{}, "id", "password").Exec()
+	if err != nil {
+		return "", err
+	}
+
+	var id, password string
+
+	err = result.Scan(&id, &password)
+	if err != nil {
+		fmt.Println(err)
+		return "", &utils.CustomError{
+			Message: "Unable to parse data.",
+		}
+	}
+
+	fmt.Println(id, password)
 
 	token, err := GenerateToken()
 	if err != nil {
-		return utils.HttpServerError(w)
+		return "", &utils.CustomError{
+			Message: "Unable to generate access token",
+		}
 	}
 
-	response := SigninResponse{
-		Token: token,
-	}
-
-	return utils.WriteJSON(w, http.StatusCreated, response)
+	return token, nil
 }
 
 func GenerateToken() (string, error) {

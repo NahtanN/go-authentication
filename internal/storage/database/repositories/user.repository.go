@@ -3,9 +3,12 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/nahtann/go-authentication/internal/storage/database"
 	"github.com/nahtann/go-authentication/internal/storage/database/models"
 	"github.com/nahtann/go-authentication/internal/utils"
 )
@@ -18,6 +21,43 @@ func NewUserRepository(database *pgxpool.Pool) *UserRepository {
 	return &UserRepository{
 		DB: database,
 	}
+}
+
+func (r *UserRepository) FindFirst(user *models.UserModel) database.IQueryBuilder {
+	queryBuilder := database.QueryBuilder{
+		DB: r.DB,
+	}
+
+	userTypes := reflect.TypeOf(*user)
+	userValues := reflect.ValueOf(*user)
+
+	if userTypes.Kind() != reflect.Struct {
+		queryBuilder.Errors = append(queryBuilder.Errors, "User model invalid.")
+
+		return &queryBuilder
+	}
+
+	searchFields := []string{}
+	for i := 0; i < userTypes.NumField(); i++ {
+		modelField := userTypes.Field(i)
+		field := modelField.Tag.Get("db")
+		value := userValues.Field(i).Interface()
+
+		clause := fmt.Sprintf("%s = $%d", field, i)
+
+		if field != "" && value != "" {
+			searchFields = append(searchFields, clause)
+			queryBuilder.Args = append(queryBuilder.Args, value.(string))
+		}
+	}
+
+	where := strings.Join(searchFields, " OR ")
+
+	query := fmt.Sprintf("SELECT * FROM users WHERE %s", where)
+
+	queryBuilder.Query = query
+
+	return &queryBuilder
 }
 
 func (r *UserRepository) Create(user *models.UserModel) error {
@@ -40,7 +80,7 @@ func (r *UserRepository) Create(user *models.UserModel) error {
 func (r *UserRepository) UserExistsByColumn(
 	column, value string,
 ) (bool, error) {
-	valid := utils.ModelHasColumn(models.UserModel{}, column)
+	valid, _ := utils.ModelHasColumn(models.UserModel{}, column)
 
 	if !valid {
 		return false, &utils.CustomError{

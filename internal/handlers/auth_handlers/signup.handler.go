@@ -31,11 +31,7 @@ func (handler *SignUpHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		apiError := utils.DefaultResponse{
-			Message: "Invalid request",
-		}
-
-		return utils.WriteJSON(w, http.StatusBadRequest, apiError)
+		return utils.HttpServerInvalidRequest(w)
 	}
 
 	errorMessages := utils.Validate(request)
