@@ -14,13 +14,13 @@ import (
 
 type IQueryBuilder interface {
 	Select(model interface{}, v ...string) IQueryBuilder
-	Exec() (pgx.Row, error)
+	Exec() (pgx.Rows, error)
 }
 
 type QueryBuilder struct {
 	DB     *pgxpool.Pool
 	Query  string
-	Args   []string
+	Args   []any
 	Errors []string
 }
 
@@ -54,7 +54,7 @@ func (qb *QueryBuilder) Select(model interface{}, columns ...string) IQueryBuild
 	return qb
 }
 
-func (qb *QueryBuilder) Exec() (pgx.Row, error) {
+func (qb *QueryBuilder) Exec() (pgx.Rows, error) {
 	errors := strings.Join(qb.Errors, " ")
 
 	if errors != "" {
@@ -63,5 +63,5 @@ func (qb *QueryBuilder) Exec() (pgx.Row, error) {
 		}
 	}
 
-	return qb.DB.QueryRow(context.Background(), qb.Query, qb.Args), nil
+	return qb.DB.Query(context.Background(), qb.Query, qb.Args...)
 }

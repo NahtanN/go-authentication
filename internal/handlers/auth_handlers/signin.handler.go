@@ -2,7 +2,6 @@ package auth_handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -52,7 +51,7 @@ func (handler *SignInHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 
 	token, err := SignIn(handler.UserRepository, request)
 	if err != nil {
-		return utils.WriteJSON(w, http.StatusInternalServerError, err)
+		return utils.WriteJSON(w, http.StatusBadRequest, err)
 	}
 
 	return utils.WriteJSON(w, http.StatusCreated, SigninResponse{
@@ -61,7 +60,7 @@ func (handler *SignInHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 }
 
 func SignIn(userRepository database.UserRepository, request *SigninRequest) (string, error) {
-	result, err := userRepository.FindFirst(&models.UserModel{
+	rows, err := userRepository.FindFirst(&models.UserModel{
 		Username: request.User,
 		Email:    request.User,
 	}).Select(models.UserModel{}, "id", "password").Exec()
@@ -71,20 +70,25 @@ func SignIn(userRepository database.UserRepository, request *SigninRequest) (str
 
 	var id, password string
 
-	err = result.Scan(&id, &password)
-	if err != nil {
-		fmt.Println(err)
-		return "", &utils.CustomError{
-			Message: "Unable to parse data.",
+	for rows.Next() {
+		err := rows.Scan(&id, &password)
+		if err != nil {
+			return "", &utils.CustomError{
+				Message: "Unable to parse data.",
+			}
 		}
 	}
 
-	fmt.Println(id, password)
+	if id == "" {
+		return "", &utils.CustomError{
+			Message: "User or password invalid.",
+		}
+	}
 
 	token, err := GenerateToken()
 	if err != nil {
 		return "", &utils.CustomError{
-			Message: "Unable to generate access token",
+			Message: "Unable to generate access token.",
 		}
 	}
 
