@@ -79,13 +79,25 @@ func SignIn(userRepository database.UserRepository, request *SigninRequest) (str
 		}
 	}
 
-	if id == "" {
-		return "", &utils.CustomError{
-			Message: "User or password invalid.",
-		}
+	defaultError := utils.CustomError{
+		Message: "User or password invalid.",
 	}
 
-	token, err := GenerateToken()
+	if id == "" {
+		return "", &defaultError
+	}
+
+	match, err := utils.VerifyPassword(request.Password, password)
+	if err != nil {
+		return "", &utils.CustomError{
+			Message: "Unable to validate user.",
+		}
+	}
+	if !match {
+		return "", &defaultError
+	}
+
+	token, err := GenerateToken(id)
 	if err != nil {
 		return "", &utils.CustomError{
 			Message: "Unable to generate access token.",
@@ -95,13 +107,13 @@ func SignIn(userRepository database.UserRepository, request *SigninRequest) (str
 	return token, nil
 }
 
-func GenerateToken() (string, error) {
+func GenerateToken(id string) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
 	byteSecret := []byte(secret)
 
 	claims := jwt.MapClaims{
 		"exp": time.Now().Add(10 * time.Minute).Unix(), // Expires in 10 minutes
-		"id":  1,
+		"id":  id,
 	}
 	tokenString := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 

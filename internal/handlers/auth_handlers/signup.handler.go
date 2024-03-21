@@ -82,10 +82,17 @@ func SingUp(userRepository database.UserRepository, request *SignupRequest) erro
 		}
 	}
 
+	hashPassword, err := utils.HashPassword(request.Password)
+	if err != nil {
+		return &utils.CustomError{
+			Message: "Unable to register user.",
+		}
+	}
+
 	err = userRepository.Create(&models.UserModel{
 		Username: request.Username,
 		Email:    request.Email,
-		Password: request.Password,
+		Password: hashPassword,
 	})
 	if err != nil {
 		return err
