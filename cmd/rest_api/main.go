@@ -34,7 +34,7 @@ func RunServer() {
 
 	apiRouter := router.NewApiRouter(mux, "/api", dbpool)
 
-	modules := []router.ApiRouterModule{modules.AuthModule}
+	modules := []router.ApiRouterModule{modules.AuthModule, modules.UsersModule}
 	apiRouter.SetModules(modules)
 
 	log.Fatal(http.ListenAndServe(":3333", mux))

@@ -37,10 +37,11 @@ func (router *ApiRouter) SetRoute(
 	method string,
 	path string,
 	handler FuncHandler,
+	middlewares ...FuncHandler,
 ) {
 	route := fmt.Sprintf("%s %s%s", strings.ToUpper(method), router.RootPath, path)
 
-	router.Mux.HandleFunc(route, httpHandler(handler))
+	router.Mux.HandleFunc(route, httpHandler(handler, middlewares...))
 }
 
 func (router *ApiRouter) build() {
@@ -49,12 +50,19 @@ func (router *ApiRouter) build() {
 	}
 }
 
-func httpHandler(fn FuncHandler) http.HandlerFunc {
+func httpHandler(fn FuncHandler, middlewares ...FuncHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		status := http.StatusInternalServerError
+
+		for _, middleware := range middlewares {
+			err := middleware(w, r)
+			if err != nil {
+				http.Error(w, "Server Error", status)
+			}
+		}
+
 		err := fn(w, r)
 		if err != nil {
-			status := http.StatusInternalServerError
-
 			http.Error(w, "Server error", status)
 		}
 	}
