@@ -8,7 +8,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type FuncHandler func(w http.ResponseWriter, r *http.Request) error
+type (
+	FuncHandler           func(w http.ResponseWriter, r *http.Request) error
+	MiddlewareFuncHandler func(w http.ResponseWriter, r *http.Request) (bool, error)
+)
 
 type ApiRouterModule func(router *ApiRouter)
 
@@ -37,7 +40,7 @@ func (router *ApiRouter) SetRoute(
 	method string,
 	path string,
 	handler FuncHandler,
-	middlewares ...FuncHandler,
+	middlewares ...MiddlewareFuncHandler,
 ) {
 	route := fmt.Sprintf("%s %s%s", strings.ToUpper(method), router.RootPath, path)
 
@@ -50,14 +53,18 @@ func (router *ApiRouter) build() {
 	}
 }
 
-func httpHandler(fn FuncHandler, middlewares ...FuncHandler) http.HandlerFunc {
+func httpHandler(fn FuncHandler, middlewares ...MiddlewareFuncHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		status := http.StatusInternalServerError
 
 		for _, middleware := range middlewares {
-			err := middleware(w, r)
+			next, err := middleware(w, r)
 			if err != nil {
 				http.Error(w, "Server Error", status)
+			}
+
+			if !next {
+				return
 			}
 		}
 
