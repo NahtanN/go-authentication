@@ -10,7 +10,7 @@ import (
 
 type (
 	FuncHandler           func(w http.ResponseWriter, r *http.Request) error
-	MiddlewareFuncHandler func(w http.ResponseWriter, r *http.Request) (bool, error)
+	MiddlewareFuncHandler func(w http.ResponseWriter, r *http.Request) (*http.Request, bool, error)
 )
 
 type ApiRouterModule func(router *ApiRouter)
@@ -57,8 +57,9 @@ func httpHandler(fn FuncHandler, middlewares ...MiddlewareFuncHandler) http.Hand
 	return func(w http.ResponseWriter, r *http.Request) {
 		status := http.StatusInternalServerError
 
+		req := r
 		for _, middleware := range middlewares {
-			next, err := middleware(w, r)
+			newReq, next, err := middleware(w, req)
 			if err != nil {
 				http.Error(w, "Server Error", status)
 			}
@@ -66,9 +67,11 @@ func httpHandler(fn FuncHandler, middlewares ...MiddlewareFuncHandler) http.Hand
 			if !next {
 				return
 			}
+
+			req = newReq
 		}
 
-		err := fn(w, r)
+		err := fn(w, req)
 		if err != nil {
 			http.Error(w, "Server error", status)
 		}

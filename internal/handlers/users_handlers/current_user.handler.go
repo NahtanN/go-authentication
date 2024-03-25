@@ -1,7 +1,6 @@
 package users_handlers
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -12,6 +11,7 @@ func NewCurrentUserHttpHandler() *CurrentUserHttpHandler {
 }
 
 func (handler *CurrentUserHttpHandler) Server(w http.ResponseWriter, r *http.Request) error {
-	fmt.Fprintf(w, "Curret user route")
+	// userId := r.Context().Value(middlewares.UserIdKey)
+
 	return nil
 }
