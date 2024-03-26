@@ -31,6 +31,12 @@ func (qb *QueryBuilder) Select(model interface{}, columns ...string) IQueryBuild
 
 	modelType := reflect.TypeOf(model)
 
+	if modelType.Kind() != reflect.Struct {
+		qb.Errors = append(qb.Errors, "Select method with invalid model interface.")
+
+		return qb
+	}
+
 	fields := []string{}
 	for _, column := range columns {
 		valid, databaseColumn := utils.ModelHasColumn(model, column)
@@ -63,5 +69,12 @@ func (qb *QueryBuilder) Exec() (pgx.Rows, error) {
 		}
 	}
 
-	return qb.DB.Query(context.Background(), qb.Query, qb.Args...)
+	rows, err := qb.DB.Query(context.Background(), qb.Query, qb.Args...)
+	if err != nil {
+		return nil, &utils.CustomError{
+			Message: "Unable to execute query.",
+		}
+	}
+
+	return rows, nil
 }

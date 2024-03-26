@@ -67,6 +67,7 @@ func SignIn(userRepository database.UserRepository, request *SigninRequest) (str
 	if err != nil {
 		return "", err
 	}
+	defer rows.Close()
 
 	var id, password string
 

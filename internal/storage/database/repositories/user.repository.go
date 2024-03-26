@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -37,17 +38,24 @@ func (r *UserRepository) FindFirst(user *models.UserModel) database.IQueryBuilde
 		return &queryBuilder
 	}
 
+	fieldCount := 1
 	searchFields := []string{}
 	for i := 0; i < userTypes.NumField(); i++ {
 		modelField := userTypes.Field(i)
+
 		field := modelField.Tag.Get("db")
 		value := userValues.Field(i).Interface()
 
-		clause := fmt.Sprintf("%s = $%d", field, i)
+		if modelField.Type == reflect.TypeOf(time.Time{}) && value.(time.Time).IsZero() {
+			continue
+		}
+
+		clause := fmt.Sprintf("%s = $%d", field, fieldCount)
 
 		if field != "" && value != "" {
 			searchFields = append(searchFields, clause)
-			queryBuilder.Args = append(queryBuilder.Args, value.(string))
+			queryBuilder.Args = append(queryBuilder.Args, value)
+			fieldCount++
 		}
 	}
 
