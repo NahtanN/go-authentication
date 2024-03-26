@@ -60,10 +60,10 @@ func (handler *SignInHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 }
 
 func SignIn(userRepository database.UserRepository, request *SigninRequest) (string, error) {
-	rows, err := userRepository.FindFirst(&models.UserModel{
+	rows, err := userRepository.FindFirst(models.UserModel{
 		Username: request.User,
 		Email:    request.User,
-	}).Select(models.UserModel{}, "id", "password").Exec()
+	}).Select("id", "password").Exec()
 	if err != nil {
 		return "", err
 	}

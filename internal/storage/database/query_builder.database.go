@@ -13,23 +13,24 @@ import (
 )
 
 type IQueryBuilder interface {
-	Select(model interface{}, v ...string) IQueryBuilder
+	Select(v ...string) IQueryBuilder
 	Exec() (pgx.Rows, error)
 }
 
 type QueryBuilder struct {
 	DB     *pgxpool.Pool
+	Model  interface{}
 	Query  string
 	Args   []any
 	Errors []string
 }
 
-func (qb *QueryBuilder) Select(model interface{}, columns ...string) IQueryBuilder {
+func (qb *QueryBuilder) Select(columns ...string) IQueryBuilder {
 	if len(columns) <= 0 {
 		return qb
 	}
 
-	modelType := reflect.TypeOf(model)
+	modelType := reflect.TypeOf(qb.Model)
 
 	if modelType.Kind() != reflect.Struct {
 		qb.Errors = append(qb.Errors, "Select method with invalid model interface.")
@@ -39,7 +40,7 @@ func (qb *QueryBuilder) Select(model interface{}, columns ...string) IQueryBuild
 
 	fields := []string{}
 	for _, column := range columns {
-		valid, databaseColumn := utils.ModelHasColumn(model, column)
+		valid, databaseColumn := utils.ModelHasColumn(qb.Model, column)
 
 		if valid {
 			fields = append(fields, databaseColumn)

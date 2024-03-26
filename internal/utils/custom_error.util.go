@@ -1,7 +1,7 @@
 package utils
 
 type CustomError struct {
-	Message string
+	Message string `json:"message"`
 }
 
 func (e *CustomError) Error() string {

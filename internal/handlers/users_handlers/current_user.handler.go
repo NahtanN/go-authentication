@@ -1,7 +1,6 @@
 package users_handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/nahtann/go-authentication/internal/context_values"
@@ -31,31 +30,37 @@ func (handler *CurrentUserHttpHandler) Server(w http.ResponseWriter, r *http.Req
 		return utils.WriteJSON(w, http.StatusBadRequest, message)
 	}
 
-	CurrentUser(handler.UserRepository, userId.(string))
+	user, err := CurrentUser(handler.UserRepository, userId.(string))
+	if err != nil {
+		return utils.WriteJSON(w, http.StatusInternalServerError, err)
+	}
 
-	return nil
+	return utils.WriteJSON(w, http.StatusOK, user)
 }
 
-func CurrentUser(userRepository database.UserRepository, id string) {
-	user := models.UserModel{}
-
-	rows, err := userRepository.FindFirst(&models.UserModel{
+func CurrentUser(userRepository database.UserRepository, id string) (*models.UserModel, error) {
+	user := models.UserModel{
 		Id: id,
-	}).Select(models.UserModel{}, "id", "username", "email", "created_at").Exec()
+	}
+
+	rows, err := userRepository.FindFirst(user).
+		Select("username", "email", "created_at").
+		Exec()
 	if err != nil {
-		fmt.Println(err)
+		return nil, &utils.CustomError{
+			Message: "Unable to retrieve current user data.",
+		}
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&user.Id, &user.Username, &user.Email, &user.CreatedAt)
+		err := rows.Scan(&user.Username, &user.Email, &user.CreatedAt)
 		if err != nil {
-			fmt.Println(err)
-			/*return "", &utils.CustomError{*/
-			/*Message: "Unable to parse data.",*/
-			/*}*/
+			return nil, &utils.CustomError{
+				Message: "Unable to parse current user data.",
+			}
 		}
 	}
 
-	fmt.Println(user)
+	return &user, nil
 }

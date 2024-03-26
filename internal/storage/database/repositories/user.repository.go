@@ -24,13 +24,14 @@ func NewUserRepository(database *pgxpool.Pool) *UserRepository {
 	}
 }
 
-func (r *UserRepository) FindFirst(user *models.UserModel) database.IQueryBuilder {
+func (r *UserRepository) FindFirst(user models.UserModel) database.IQueryBuilder {
 	queryBuilder := database.QueryBuilder{
-		DB: r.DB,
+		DB:    r.DB,
+		Model: user,
 	}
 
-	userTypes := reflect.TypeOf(*user)
-	userValues := reflect.ValueOf(*user)
+	userTypes := reflect.TypeOf(user)
+	userValues := reflect.ValueOf(user)
 
 	if userTypes.Kind() != reflect.Struct {
 		queryBuilder.Errors = append(queryBuilder.Errors, "User model invalid.")

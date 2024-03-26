@@ -9,5 +9,5 @@ type UserRepository interface {
 	UserExistsByColumn(
 		column, value string,
 	) (bool, error)
-	FindFirst(user *models.UserModel) IQueryBuilder
+	FindFirst(user models.UserModel) IQueryBuilder
 }
