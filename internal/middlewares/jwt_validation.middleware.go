@@ -9,12 +9,9 @@ import (
 
 	"github.com/golang-jwt/jwt"
 
+	"github.com/nahtann/go-authentication/internal/context_values"
 	"github.com/nahtann/go-authentication/internal/utils"
 )
-
-type userIdContextKey string
-
-const UserIdKey = userIdContextKey("middleware.jwt_validation.userId")
 
 type JWTValidationHttpHandler struct{}
 
@@ -51,7 +48,7 @@ func (m *JWTValidationHttpHandler) Serve(
 
 	}
 
-	ctx := context.WithValue(r.Context(), UserIdKey, userId)
+	ctx := context.WithValue(r.Context(), context_values.UserIdKey, userId)
 	req := r.WithContext(ctx)
 
 	return req, true, nil
