@@ -22,8 +22,9 @@ type SigninRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type SigninResponse struct {
-	Token string `json:"token"`
+type Tokens struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 func NewSignInHttpHandler(userRepository database.UserRepository) *SignInHttpHandler {
@@ -49,23 +50,21 @@ func (handler *SignInHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 		return utils.WriteJSON(w, http.StatusBadRequest, message)
 	}
 
-	token, err := SignIn(handler.UserRepository, request)
+	tokens, err := SignIn(handler.UserRepository, request)
 	if err != nil {
 		return utils.WriteJSON(w, http.StatusBadRequest, err)
 	}
 
-	return utils.WriteJSON(w, http.StatusCreated, SigninResponse{
-		Token: token,
-	})
+	return utils.WriteJSON(w, http.StatusCreated, tokens)
 }
 
-func SignIn(userRepository database.UserRepository, request *SigninRequest) (string, error) {
+func SignIn(userRepository database.UserRepository, request *SigninRequest) (*Tokens, error) {
 	rows, err := userRepository.FindFirst(models.UserModel{
 		Username: request.User,
 		Email:    request.User,
 	}).Select("id", "password").Exec()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -74,7 +73,7 @@ func SignIn(userRepository database.UserRepository, request *SigninRequest) (str
 	for rows.Next() {
 		err := rows.Scan(&id, &password)
 		if err != nil {
-			return "", &utils.CustomError{
+			return nil, &utils.CustomError{
 				Message: "Unable to parse data.",
 			}
 		}
@@ -85,43 +84,58 @@ func SignIn(userRepository database.UserRepository, request *SigninRequest) (str
 	}
 
 	if id == "" {
-		return "", &defaultError
+		return nil, &defaultError
 	}
 
 	match, err := utils.VerifyPassword(request.Password, password)
 	if err != nil {
-		return "", &utils.CustomError{
+		return nil, &utils.CustomError{
 			Message: "Unable to validate user.",
 		}
 	}
 	if !match {
-		return "", &defaultError
+		return nil, &defaultError
 	}
 
-	token, err := GenerateToken(id)
+	tokens, err := GenerateTokens(id)
 	if err != nil {
-		return "", &utils.CustomError{
+		return nil, &utils.CustomError{
 			Message: "Unable to generate access token.",
 		}
 	}
 
-	return token, nil
+	return tokens, nil
 }
 
-func GenerateToken(id string) (string, error) {
+func GenerateTokens(id string) (*Tokens, error) {
 	secret := os.Getenv("JWT_SECRET")
 	byteSecret := []byte(secret)
 
-	claims := jwt.MapClaims{
+	accessTokenClaims := jwt.MapClaims{
 		"exp": time.Now().Add(10 * time.Minute).Unix(), // Expires in 10 minutes
 		"id":  id,
 	}
-	tokenString := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	accessTokenString := jwt.NewWithClaims(jwt.SigningMethodHS256, accessTokenClaims)
 
-	token, err := tokenString.SignedString(byteSecret)
+	refreshTokenClaims := jwt.MapClaims{
+		"exp": time.Now().Add(15 * time.Hour).Unix(),
+	}
+	refreshTokenString := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshTokenClaims)
+
+	accessToken, err := accessTokenString.SignedString(byteSecret)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return token, nil
+	refreshToken, err := refreshTokenString.SignedString(byteSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	tokens := Tokens{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	return &tokens, nil
 }
