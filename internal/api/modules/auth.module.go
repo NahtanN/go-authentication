@@ -11,11 +11,12 @@ const authRootRoute = "/auth"
 
 func AuthModule(router *router.ApiRouter) {
 	userRepository := repositories.NewUserRepository(router.DB)
+	refreshTokenRepository := repositories.NewRefreshTokenRepository(router.DB)
 
 	router.SetRoute(
 		"POST",
 		utils.SetSubRoute(authRootRoute, "/signin"),
-		auth_handlers.NewSignInHttpHandler(userRepository).Serve,
+		auth_handlers.NewSignInHttpHandler(userRepository, refreshTokenRepository).Serve,
 	)
 	router.SetRoute(
 		"POST",

@@ -14,7 +14,8 @@ import (
 )
 
 type SignInHttpHandler struct {
-	UserRepository database.UserRepository
+	UserRepository         database.UserRepository
+	RefreshTokenRepository database.RefreshTokenRepository
 }
 
 type SigninRequest struct {
@@ -23,13 +24,18 @@ type SigninRequest struct {
 }
 
 type Tokens struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
+	AccessToken            string    `json:"accessToken"`
+	RefreshToken           string    `json:"refreshToken"`
+	RefreshTokenExpiration time.Time `json:"-"`
 }
 
-func NewSignInHttpHandler(userRepository database.UserRepository) *SignInHttpHandler {
+func NewSignInHttpHandler(
+	userRepository database.UserRepository,
+	refreshTokenRepository database.RefreshTokenRepository,
+) *SignInHttpHandler {
 	return &SignInHttpHandler{
-		UserRepository: userRepository,
+		UserRepository:         userRepository,
+		RefreshTokenRepository: refreshTokenRepository,
 	}
 }
 
@@ -50,7 +56,7 @@ func (handler *SignInHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 		return utils.WriteJSON(w, http.StatusBadRequest, message)
 	}
 
-	tokens, err := SignIn(handler.UserRepository, request)
+	tokens, err := SignIn(handler.UserRepository, handler.RefreshTokenRepository, request)
 	if err != nil {
 		return utils.WriteJSON(w, http.StatusBadRequest, err)
 	}
@@ -58,7 +64,11 @@ func (handler *SignInHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 	return utils.WriteJSON(w, http.StatusCreated, tokens)
 }
 
-func SignIn(userRepository database.UserRepository, request *SigninRequest) (*Tokens, error) {
+func SignIn(
+	userRepository database.UserRepository,
+	refreshTokenRepository database.RefreshTokenRepository,
+	request *SigninRequest,
+) (*Tokens, error) {
 	rows, err := userRepository.FindFirst(models.UserModel{
 		Username: request.User,
 		Email:    request.User,
@@ -104,6 +114,16 @@ func SignIn(userRepository database.UserRepository, request *SigninRequest) (*To
 		}
 	}
 
+	// Insert refresh token into database
+	err = refreshTokenRepository.Create(models.RefreshTokenModel{
+		Token:     tokens.RefreshToken,
+		UserId:    id,
+		ExpiresAt: tokens.RefreshTokenExpiration,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return tokens, nil
 }
 
@@ -117,8 +137,10 @@ func GenerateTokens(id string) (*Tokens, error) {
 	}
 	accessTokenString := jwt.NewWithClaims(jwt.SigningMethodHS256, accessTokenClaims)
 
+	refreshTokenExpiration := time.Now().AddDate(0, 0, 15)
+
 	refreshTokenClaims := jwt.MapClaims{
-		"exp": time.Now().Add(15 * time.Hour).Unix(),
+		"exp": refreshTokenExpiration.Unix(),
 	}
 	refreshTokenString := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshTokenClaims)
 
@@ -133,8 +155,9 @@ func GenerateTokens(id string) (*Tokens, error) {
 	}
 
 	tokens := Tokens{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		AccessToken:            accessToken,
+		RefreshToken:           refreshToken,
+		RefreshTokenExpiration: refreshTokenExpiration,
 	}
 
 	return &tokens, nil

@@ -11,3 +11,7 @@ type UserRepository interface {
 	) (bool, error)
 	FindFirst(user models.UserModel) IQueryBuilder
 }
+
+type RefreshTokenRepository interface {
+	Create(token models.RefreshTokenModel) error
+}
