@@ -85,7 +85,55 @@ func (r *RefreshTokenRepository) Create(token models.RefreshTokenModel) error {
 		strings.Join(valueSequence, ", "),
 	)
 
-	fmt.Println(query, queryData.SearchArgs)
+	_, err = r.DB.Exec(
+		context.Background(),
+		query,
+		queryData.SearchArgs...,
+	)
+	if err != nil {
+		fmt.Println(err)
+		return &utils.CustomError{
+			Message: "Unable to save refresh token.",
+		}
+	}
+
+	return nil
+}
+
+func (r *RefreshTokenRepository) Update(token models.RefreshTokenModel) error {
+	queryData, err := database_common.SetQueryData(token)
+	if err != nil {
+		return &utils.CustomError{
+			Message: "Unable to set query data.",
+		}
+	}
+
+	if len(queryData.SearchFields) == 0 || len(queryData.SearchArgs) == 0 {
+		return &utils.CustomError{
+			Message: "Query data args not seted.",
+		}
+	}
+
+	// var rowId string
+	// sequence := 1
+	valueSequence := []string{}
+	for index, field := range queryData.SearchFields {
+		if field == "id" {
+			// rowId = queryData.SearchArgs[index].(string)
+			continue
+		}
+
+		formattedSequence := fmt.Sprintf("%s = $%d", field, index+1)
+		valueSequence = append(valueSequence, formattedSequence)
+		// sequence += 1
+	}
+
+	fmt.Println(valueSequence)
+
+	query := fmt.Sprintf(
+		"UPDATE refresh_tokens SET %s WHERE id = $1",
+		strings.Join(valueSequence, ", "),
+	)
 
 	_, err = r.DB.Exec(
 		context.Background(),

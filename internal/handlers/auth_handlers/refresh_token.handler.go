@@ -86,6 +86,8 @@ func RefreshToken(
 		}
 	}
 
+	fmt.Println(used)
+
 	if used {
 		InvalidateUserRefreshTokens(userId)
 
@@ -94,6 +96,17 @@ func RefreshToken(
 		}
 	}
 
+	return UpdateUserRefreshToken(refreshTokenRepository, userId, id)
+}
+
+func InvalidateUserRefreshTokens(userId string) {
+	fmt.Printf("invalidate token %s", userId)
+}
+
+func UpdateUserRefreshToken(
+	refreshTokenRepository database.RefreshTokenRepository,
+	userId, parentTokenId string,
+) (*Tokens, error) {
 	tokens, err := GenerateTokens(userId)
 	if err != nil {
 		return nil, &utils.CustomError{
@@ -102,7 +115,7 @@ func RefreshToken(
 	}
 
 	err = refreshTokenRepository.Create(models.RefreshTokenModel{
-		ParentTokenId: id,
+		ParentTokenId: parentTokenId,
 		Token:         tokens.RefreshToken,
 		UserId:        userId,
 		ExpiresAt:     tokens.RefreshTokenExpiration,
@@ -111,9 +124,13 @@ func RefreshToken(
 		return nil, err
 	}
 
-	return tokens, nil
-}
+	err = refreshTokenRepository.Update(models.RefreshTokenModel{
+		Id:   parentTokenId,
+		Used: true,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-func InvalidateUserRefreshTokens(userId string) {
-	fmt.Printf("invalidate token %s", userId)
+	return tokens, nil
 }
