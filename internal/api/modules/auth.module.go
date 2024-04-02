@@ -23,4 +23,9 @@ func AuthModule(router *router.ApiRouter) {
 		utils.SetSubRoute(authRootRoute, "/signup"),
 		auth_handlers.NewSignUpHttpHandler(userRepository).Serve,
 	)
+	router.SetRoute(
+		"POST",
+		utils.SetSubRoute(authRootRoute, "/refresh-token"),
+		auth_handlers.NewRefreshTokenHttpHandler(refreshTokenRepository).Serve,
+	)
 }

@@ -4,6 +4,7 @@ create table refresh_tokens (
     token varchar(255) not null,
     user_id uuid not null,
     expires_at timestamp with time zone not null,
+    used boolean default false,
     created_at timestamp with time zone not null default (current_timestamp at time zone 'utc')
 );
 

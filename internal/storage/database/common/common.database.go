@@ -1,7 +1,9 @@
-package database
+package database_common
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/nahtann/go-authentication/internal/utils"
@@ -45,4 +47,16 @@ func SetQueryData(model interface{}) (*QueryData, error) {
 	}
 
 	return &qd, nil
+}
+
+func (qd *QueryData) JoinArgs(sep string) string {
+	stringSlice := make([]string, len(qd.SearchArgs))
+
+	for i, v := range qd.SearchArgs {
+		stringSlice[i] = fmt.Sprint(v)
+	}
+
+	result := strings.Join(stringSlice, sep)
+
+	return result
 }

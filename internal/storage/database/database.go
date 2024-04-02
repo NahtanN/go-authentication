@@ -14,4 +14,5 @@ type UserRepository interface {
 
 type RefreshTokenRepository interface {
 	Create(token models.RefreshTokenModel) error
+	FindFirst(refreshToken models.RefreshTokenModel) IQueryBuilder
 }

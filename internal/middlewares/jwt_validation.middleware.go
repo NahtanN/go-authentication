@@ -45,7 +45,6 @@ func (m *JWTValidationHttpHandler) Serve(
 		}
 
 		return nil, false, utils.WriteJSON(w, http.StatusInternalServerError, message)
-
 	}
 
 	ctx := context.WithValue(r.Context(), context_values.UserIdKey, userId)

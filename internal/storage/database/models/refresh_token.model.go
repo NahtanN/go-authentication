@@ -8,6 +8,7 @@ type RefreshTokenModel struct {
 	Token         string    `db:"token"`
 	UserId        string    `db:"user_id"`
 	ExpiresAt     time.Time `db:"expires_at"`
+	Used          bool      `db:"used"`
 	CreatedAt     time.Time `db:"created_at"`
 
 	User UserModel
