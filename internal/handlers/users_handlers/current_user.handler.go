@@ -30,7 +30,7 @@ func (handler *CurrentUserHttpHandler) Server(w http.ResponseWriter, r *http.Req
 		return utils.WriteJSON(w, http.StatusBadRequest, message)
 	}
 
-	user, err := CurrentUser(handler.UserRepository, userId.(string))
+	user, err := CurrentUser(handler.UserRepository, userId.(uint32))
 	if err != nil {
 		return utils.WriteJSON(w, http.StatusInternalServerError, err)
 	}
@@ -38,7 +38,7 @@ func (handler *CurrentUserHttpHandler) Server(w http.ResponseWriter, r *http.Req
 	return utils.WriteJSON(w, http.StatusOK, user)
 }
 
-func CurrentUser(userRepository database.UserRepository, id string) (*models.UserModel, error) {
+func CurrentUser(userRepository database.UserRepository, id uint32) (*models.UserModel, error) {
 	user := models.UserModel{
 		Id: id,
 	}

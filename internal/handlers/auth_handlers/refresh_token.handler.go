@@ -2,12 +2,12 @@ package auth_handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/nahtann/go-authentication/internal/middlewares"
 	"github.com/nahtann/go-authentication/internal/storage/database"
 	"github.com/nahtann/go-authentication/internal/storage/database/models"
+	"github.com/nahtann/go-authentication/internal/storage/database/query_builder"
 	"github.com/nahtann/go-authentication/internal/utils"
 )
 
@@ -64,9 +64,12 @@ func RefreshToken(
 		}
 	}
 
-	rows, err := refreshTokenRepository.FindFirst(models.RefreshTokenModel{
-		Token: tokenString,
-	}).Select("id", "user_id", "used").Exec()
+	rows, err := refreshTokenRepository.FindFirst().
+		Where(
+			query_builder.Equals("token", tokenString),
+		).
+		Select("id", "user_id", "used").
+		Exec()
 	if err != nil {
 		return nil, &utils.CustomError{
 			Message: "Unable to validate refresh token data.",
@@ -74,7 +77,7 @@ func RefreshToken(
 	}
 	defer rows.Close()
 
-	var id, userId string
+	var id, userId uint32
 	var used bool
 
 	for rows.Next() {
@@ -86,9 +89,7 @@ func RefreshToken(
 		}
 	}
 
-	fmt.Println(used)
-
-	if used {
+	if used || userId == 0 {
 		InvalidateUserRefreshTokens(userId)
 
 		return nil, &utils.CustomError{
@@ -99,13 +100,12 @@ func RefreshToken(
 	return UpdateUserRefreshToken(refreshTokenRepository, userId, id)
 }
 
-func InvalidateUserRefreshTokens(userId string) {
-	fmt.Printf("invalidate token %s", userId)
+func InvalidateUserRefreshTokens(userId uint32) {
 }
 
 func UpdateUserRefreshToken(
 	refreshTokenRepository database.RefreshTokenRepository,
-	userId, parentTokenId string,
+	userId, parentTokenId uint32,
 ) (*Tokens, error) {
 	tokens, err := GenerateTokens(userId)
 	if err != nil {

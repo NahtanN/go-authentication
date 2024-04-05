@@ -14,47 +14,28 @@ import (
 )
 
 type RefreshTokenRepository struct {
-	DB *pgxpool.Pool
+	DB    *pgxpool.Pool
+	table string
+	alias string
 }
 
 func NewRefreshTokenRepository(database *pgxpool.Pool) *RefreshTokenRepository {
 	return &RefreshTokenRepository{
-		DB: database,
+		DB:    database,
+		table: "refresh_tokens",
+		alias: "rft",
 	}
 }
 
-func (r *RefreshTokenRepository) FindFirst(
-	refreshToken models.RefreshTokenModel,
-) database.IQueryBuilder {
+func (r *RefreshTokenRepository) FindFirst() database.IQueryBuilder {
 	queryBuilder := database.QueryBuilder{
 		DB:    r.DB,
-		Model: refreshToken,
+		Model: models.RefreshTokenModel{},
+		Table: r.table,
+		Alias: r.alias,
 	}
 
-	queryData, err := database_common.SetQueryData(refreshToken)
-	if err != nil {
-		queryBuilder.Errors = append(queryBuilder.Errors, "Unable to set query data.")
-		return &queryBuilder
-	}
-
-	if len(queryData.SearchFields) == 0 || len(queryData.SearchArgs) == 0 {
-		queryBuilder.Errors = append(queryBuilder.Errors, "Query data args not seted.")
-		return &queryBuilder
-	}
-
-	clause := []string{}
-	for i, v := range queryData.SearchFields {
-		search := fmt.Sprintf("%s = $%d", v, i+1)
-
-		clause = append(clause, search)
-	}
-
-	where := strings.Join(clause, " OR ")
-
-	query := fmt.Sprintf("SELECT * FROM refresh_tokens WHERE %s", where)
-
-	queryBuilder.Query = query
-	queryBuilder.Args = queryData.SearchArgs
+	queryBuilder.Query = fmt.Sprintf("SELECT * FROM %s %s LIMIT 1", r.table, r.alias)
 
 	return &queryBuilder
 }

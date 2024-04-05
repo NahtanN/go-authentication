@@ -3,10 +3,10 @@ package models
 import "time"
 
 type RefreshTokenModel struct {
-	Id            string    `db:"id"`
-	ParentTokenId string    `db:"parent_token_id"`
+	Id            uint32    `db:"id"`
+	ParentTokenId uint32    `db:"parent_token_id"`
 	Token         string    `db:"token"`
-	UserId        string    `db:"user_id"`
+	UserId        uint32    `db:"user_id"`
 	ExpiresAt     time.Time `db:"expires_at"`
 	Used          bool      `db:"used"`
 	CreatedAt     time.Time `db:"created_at"`

@@ -12,7 +12,12 @@ import (
 	"github.com/nahtann/go-authentication/internal/utils"
 )
 
+type QueryBuilderWhereMethod interface {
+	Format(queryBuilder *QueryBuilder) string
+}
+
 type IQueryBuilder interface {
+	Where(methods ...QueryBuilderWhereMethod) IQueryBuilder
 	Select(v ...string) IQueryBuilder
 	Exec() (pgx.Rows, error)
 }
@@ -23,6 +28,31 @@ type QueryBuilder struct {
 	Query  string
 	Args   []any
 	Errors []string
+	Table  string
+	Alias  string
+}
+
+func (qb *QueryBuilder) Where(methods ...QueryBuilderWhereMethod) IQueryBuilder {
+	searchArgs := []string{}
+	for _, method := range methods {
+		search := method.Format(qb)
+
+		searchArgs = append(searchArgs, search)
+	}
+
+	queryParts := strings.Split(qb.Query, qb.Alias)
+
+	newQuery := fmt.Sprintf(
+		"%s%s WHERE %s%s",
+		queryParts[0],
+		qb.Alias,
+		strings.Join(searchArgs, " AND "),
+		queryParts[1],
+	)
+
+	qb.Query = newQuery
+
+	return qb
 }
 
 func (qb *QueryBuilder) Select(columns ...string) IQueryBuilder {
@@ -69,6 +99,8 @@ func (qb *QueryBuilder) Exec() (pgx.Rows, error) {
 			Message: errors,
 		}
 	}
+
+	fmt.Println(qb.Query, qb.Args)
 
 	rows, err := qb.DB.Query(context.Background(), qb.Query, qb.Args...)
 	if err != nil {

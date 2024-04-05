@@ -78,7 +78,8 @@ func SignIn(
 	}
 	defer rows.Close()
 
-	var id, password string
+	var id uint32
+	var password string
 
 	for rows.Next() {
 		err := rows.Scan(&id, &password)
@@ -93,7 +94,7 @@ func SignIn(
 		Message: "User or password invalid.",
 	}
 
-	if id == "" {
+	if id == 0 {
 		return nil, &defaultError
 	}
 
@@ -127,7 +128,7 @@ func SignIn(
 	return tokens, nil
 }
 
-func GenerateTokens(id string) (*Tokens, error) {
+func GenerateTokens(id uint32) (*Tokens, error) {
 	secret := os.Getenv("JWT_SECRET")
 	byteSecret := []byte(secret)
 
