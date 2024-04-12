@@ -109,8 +109,6 @@ func (r *RefreshTokenRepository) Update(token models.RefreshTokenModel) error {
 		// sequence += 1
 	}
 
-	fmt.Println(valueSequence)
-
 	query := fmt.Sprintf(
 		"UPDATE refresh_tokens SET %s WHERE id = $1",
 		strings.Join(valueSequence, ", "),

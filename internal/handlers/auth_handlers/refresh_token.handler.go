@@ -90,7 +90,7 @@ func RefreshToken(
 	}
 
 	if used || userId == 0 {
-		InvalidateUserRefreshTokens(userId)
+		_ = InvalidateUserRefreshTokens(refreshTokenRepository, id, userId)
 
 		return nil, &utils.CustomError{
 			Message: "Invalid Request",
@@ -100,7 +100,21 @@ func RefreshToken(
 	return UpdateUserRefreshToken(refreshTokenRepository, userId, id)
 }
 
-func InvalidateUserRefreshTokens(userId uint32) {
+func InvalidateUserRefreshTokens(
+	refreshTokenRepository database.RefreshTokenRepository,
+	tokenId, userId uint32,
+) error {
+	err := refreshTokenRepository.Update(models.RefreshTokenModel{
+		Id:     tokenId,
+		UserId: userId,
+	})
+	if err != nil {
+		return &utils.CustomError{
+			Message: "Invalid Request",
+		}
+	}
+
+	return nil
 }
 
 func UpdateUserRefreshToken(

@@ -100,8 +100,6 @@ func (qb *QueryBuilder) Exec() (pgx.Rows, error) {
 		}
 	}
 
-	fmt.Println(qb.Query, qb.Args)
-
 	rows, err := qb.DB.Query(context.Background(), qb.Query, qb.Args...)
 	if err != nil {
 		return nil, &utils.CustomError{
