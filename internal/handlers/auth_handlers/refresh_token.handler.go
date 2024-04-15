@@ -64,6 +64,7 @@ func RefreshToken(
 		}
 	}
 
+	// TODO: rewrite using query builder
 	rows, err := refreshTokenRepository.FindFirst().
 		Where(
 			query_builder.Equals("token", tokenString),
@@ -104,6 +105,7 @@ func InvalidateUserRefreshTokens(
 	refreshTokenRepository database.RefreshTokenRepository,
 	tokenId, userId uint32,
 ) error {
+	// TODO: rewrite using query builder
 	err := refreshTokenRepository.Update(models.RefreshTokenModel{
 		Id:     tokenId,
 		UserId: userId,
@@ -128,6 +130,7 @@ func UpdateUserRefreshToken(
 		}
 	}
 
+	// TODO: rewrite using query builder
 	err = refreshTokenRepository.Create(models.RefreshTokenModel{
 		ParentTokenId: parentTokenId,
 		Token:         tokens.RefreshToken,
@@ -138,6 +141,7 @@ func UpdateUserRefreshToken(
 		return nil, err
 	}
 
+	// TODO: rewrite using query builder
 	err = refreshTokenRepository.Update(models.RefreshTokenModel{
 		Id:   parentTokenId,
 		Used: true,

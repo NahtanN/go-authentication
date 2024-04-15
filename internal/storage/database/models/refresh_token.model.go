@@ -13,3 +13,7 @@ type RefreshTokenModel struct {
 
 	User UserModel
 }
+
+func (rt *RefreshTokenModel) Table() (string, string) {
+	return "refresh_tokens", "rt"
+}

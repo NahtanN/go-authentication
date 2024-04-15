@@ -2,8 +2,6 @@ package query_builder
 
 import (
 	"fmt"
-
-	"github.com/nahtann/go-authentication/internal/storage/database"
 )
 
 type EqualsMethod struct {
@@ -18,10 +16,16 @@ func Equals(column string, value any) *EqualsMethod {
 	}
 }
 
-func (e *EqualsMethod) Format(queryBuilder *database.QueryBuilder) string {
-	search := fmt.Sprintf("%s = $%d", e.Column, len(queryBuilder.Args)+1)
+func (e *EqualsMethod) Format(qb *QueryBuilder) string {
+	valid := qb.ValidColumnData(e.Column, e.Value)
 
-	queryBuilder.Args = append(queryBuilder.Args, e.Value)
+	if !valid {
+		return ""
+	}
+
+	search := fmt.Sprintf("%s = $%d", e.Column, len(qb.Args)+1)
+
+	qb.Args = append(qb.Args, e.Value)
 
 	return search
 }
