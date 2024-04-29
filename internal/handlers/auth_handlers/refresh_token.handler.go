@@ -1,29 +1,27 @@
 package auth_handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/nahtann/go-authentication/internal/middlewares"
-	"github.com/nahtann/go-authentication/internal/storage/database"
-	"github.com/nahtann/go-authentication/internal/storage/database/models"
-	"github.com/nahtann/go-authentication/internal/storage/database/query_builder"
 	"github.com/nahtann/go-authentication/internal/utils"
 )
 
 type RefreshTokenHttpHandler struct {
-	RefreshTokenRepository database.RefreshTokenRepository
+	DB *pgxpool.Pool
 }
 
 type RefreshTokenRequest struct {
 	Token string `json:"token" validate:"required"`
 }
 
-func NewRefreshTokenHttpHandler(
-	refreshTokenRepository database.RefreshTokenRepository,
-) *RefreshTokenHttpHandler {
+func NewRefreshTokenHttpHandler(db *pgxpool.Pool) *RefreshTokenHttpHandler {
 	return &RefreshTokenHttpHandler{
-		RefreshTokenRepository: refreshTokenRepository,
+		DB: db,
 	}
 }
 
@@ -44,7 +42,7 @@ func (handler *RefreshTokenHttpHandler) Serve(w http.ResponseWriter, r *http.Req
 		return utils.WriteJSON(w, http.StatusBadRequest, message)
 	}
 
-	tokens, err := RefreshToken(handler.RefreshTokenRepository, request.Token)
+	tokens, err := RefreshToken(handler.DB, request.Token)
 	if err != nil {
 		return utils.WriteJSON(w, 401, err)
 	}
@@ -53,7 +51,7 @@ func (handler *RefreshTokenHttpHandler) Serve(w http.ResponseWriter, r *http.Req
 }
 
 func RefreshToken(
-	refreshTokenRepository database.RefreshTokenRepository,
+	db *pgxpool.Pool,
 	tokenString string,
 ) (*Tokens, error) {
 	token, valid := middlewares.ValidateJWT(tokenString)
@@ -64,13 +62,11 @@ func RefreshToken(
 		}
 	}
 
-	// TODO: rewrite using query builder
-	rows, err := refreshTokenRepository.FindFirst().
-		Where(
-			query_builder.Equals("token", tokenString),
-		).
-		Select("id", "user_id", "used").
-		Exec()
+	rows, err := db.Query(
+		context.Background(),
+		"SELECT id, user_id, used FROM refresh_tokens WHERE token = $1",
+		tokenString,
+	)
 	if err != nil {
 		return nil, &utils.CustomError{
 			Message: "Unable to validate refresh token data.",
@@ -91,25 +87,25 @@ func RefreshToken(
 	}
 
 	if used || userId == 0 {
-		_ = InvalidateUserRefreshTokens(refreshTokenRepository, id, userId)
+		_ = InvalidateUserRefreshTokens(db, userId)
 
 		return nil, &utils.CustomError{
 			Message: "Invalid Request",
 		}
 	}
 
-	return UpdateUserRefreshToken(refreshTokenRepository, userId, id)
+	return UpdateUserRefreshToken(db, userId, id)
 }
 
 func InvalidateUserRefreshTokens(
-	refreshTokenRepository database.RefreshTokenRepository,
-	tokenId, userId uint32,
+	db *pgxpool.Pool,
+	userId uint32,
 ) error {
-	// TODO: rewrite using query builder
-	err := refreshTokenRepository.Update(models.RefreshTokenModel{
-		Id:     tokenId,
-		UserId: userId,
-	})
+	_, err := db.Exec(
+		context.Background(),
+		"UPDATE refresh_tokens SET used = true WHERE user_id = $1",
+		userId,
+	)
 	if err != nil {
 		return &utils.CustomError{
 			Message: "Invalid Request",
@@ -120,7 +116,7 @@ func InvalidateUserRefreshTokens(
 }
 
 func UpdateUserRefreshToken(
-	refreshTokenRepository database.RefreshTokenRepository,
+	db *pgxpool.Pool,
 	userId, parentTokenId uint32,
 ) (*Tokens, error) {
 	tokens, err := GenerateTokens(userId)
@@ -130,22 +126,23 @@ func UpdateUserRefreshToken(
 		}
 	}
 
-	// TODO: rewrite using query builder
-	err = refreshTokenRepository.Create(models.RefreshTokenModel{
-		ParentTokenId: parentTokenId,
-		Token:         tokens.RefreshToken,
-		UserId:        userId,
-		ExpiresAt:     tokens.RefreshTokenExpiration,
-	})
+	_, err = db.Exec(
+		context.Background(),
+		"INSERT INTO refresh_tokens (parent_token_id, token, user_id, expires_at) VALUES ($1, $2, $3, $4)",
+		parentTokenId,
+		tokens.RefreshToken,
+		userId,
+		tokens.RefreshTokenExpiration,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: rewrite using query builder
-	err = refreshTokenRepository.Update(models.RefreshTokenModel{
-		Id:   parentTokenId,
-		Used: true,
-	})
+	_, err = db.Exec(
+		context.Background(),
+		"UPDATE refresh_tokens SET used = true WHERE id = $1",
+		parentTokenId,
+	)
 	if err != nil {
 		return nil, err
 	}

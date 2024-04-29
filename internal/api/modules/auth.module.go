@@ -26,6 +26,6 @@ func AuthModule(router *router.ApiRouter) {
 	router.SetRoute(
 		"POST",
 		utils.SetSubRoute(authRootRoute, "/refresh-token"),
-		auth_handlers.NewRefreshTokenHttpHandler(refreshTokenRepository).Serve,
+		auth_handlers.NewRefreshTokenHttpHandler(router.DB).Serve,
 	)
 }
