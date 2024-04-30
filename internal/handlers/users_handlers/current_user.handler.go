@@ -1,21 +1,23 @@
 package users_handlers
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/nahtann/go-authentication/internal/context_values"
-	"github.com/nahtann/go-authentication/internal/storage/database"
 	"github.com/nahtann/go-authentication/internal/storage/database/models"
 	"github.com/nahtann/go-authentication/internal/utils"
 )
 
 type CurrentUserHttpHandler struct {
-	UserRepository database.UserRepository
+	DB *pgxpool.Pool
 }
 
-func NewCurrentUserHttpHandler(userRepository database.UserRepository) *CurrentUserHttpHandler {
+func NewCurrentUserHttpHandler(db *pgxpool.Pool) *CurrentUserHttpHandler {
 	return &CurrentUserHttpHandler{
-		UserRepository: userRepository,
+		DB: db,
 	}
 }
 
@@ -30,7 +32,7 @@ func (handler *CurrentUserHttpHandler) Server(w http.ResponseWriter, r *http.Req
 		return utils.WriteJSON(w, http.StatusBadRequest, message)
 	}
 
-	user, err := CurrentUser(handler.UserRepository, userId.(uint32))
+	user, err := CurrentUser(handler.DB, uint32(userId.(float64)))
 	if err != nil {
 		return utils.WriteJSON(w, http.StatusInternalServerError, err)
 	}
@@ -38,14 +40,16 @@ func (handler *CurrentUserHttpHandler) Server(w http.ResponseWriter, r *http.Req
 	return utils.WriteJSON(w, http.StatusOK, user)
 }
 
-func CurrentUser(userRepository database.UserRepository, id uint32) (*models.UserModel, error) {
+func CurrentUser(db *pgxpool.Pool, id uint32) (*models.UserModel, error) {
 	user := models.UserModel{
 		Id: id,
 	}
 
-	rows, err := userRepository.FindFirst(user).
-		Select("username", "email", "created_at").
-		Exec()
+	rows, err := db.Query(
+		context.Background(),
+		"SELECT username, email, created_at FROM users WHERE id = $1",
+		id,
+	)
 	if err != nil {
 		return nil, &utils.CustomError{
 			Message: "Unable to retrieve current user data.",
