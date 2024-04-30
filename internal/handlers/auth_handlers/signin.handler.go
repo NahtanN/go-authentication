@@ -1,21 +1,20 @@
 package auth_handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/nahtann/go-authentication/internal/storage/database"
-	"github.com/nahtann/go-authentication/internal/storage/database/models"
 	"github.com/nahtann/go-authentication/internal/utils"
 )
 
 type SignInHttpHandler struct {
-	UserRepository         database.UserRepository
-	RefreshTokenRepository database.RefreshTokenRepository
+	DB *pgxpool.Pool
 }
 
 type SigninRequest struct {
@@ -30,12 +29,10 @@ type Tokens struct {
 }
 
 func NewSignInHttpHandler(
-	userRepository database.UserRepository,
-	refreshTokenRepository database.RefreshTokenRepository,
+	db *pgxpool.Pool,
 ) *SignInHttpHandler {
 	return &SignInHttpHandler{
-		UserRepository:         userRepository,
-		RefreshTokenRepository: refreshTokenRepository,
+		DB: db,
 	}
 }
 
@@ -56,7 +53,7 @@ func (handler *SignInHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 		return utils.WriteJSON(w, http.StatusBadRequest, message)
 	}
 
-	tokens, err := SignIn(handler.UserRepository, handler.RefreshTokenRepository, request)
+	tokens, err := SignIn(handler.DB, request)
 	if err != nil {
 		return utils.WriteJSON(w, http.StatusBadRequest, err)
 	}
@@ -65,14 +62,14 @@ func (handler *SignInHttpHandler) Serve(w http.ResponseWriter, r *http.Request) 
 }
 
 func SignIn(
-	userRepository database.UserRepository,
-	refreshTokenRepository database.RefreshTokenRepository,
+	db *pgxpool.Pool,
 	request *SigninRequest,
 ) (*Tokens, error) {
-	rows, err := userRepository.FindFirst(models.UserModel{
-		Username: request.User,
-		Email:    request.User,
-	}).Select("id", "password").Exec()
+	rows, err := db.Query(
+		context.Background(),
+		"SELECT id, password FROM users WHERE email LIKE $1 OR username LIKE $1",
+		request.User,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -116,11 +113,13 @@ func SignIn(
 	}
 
 	// Insert refresh token into database
-	err = refreshTokenRepository.Create(models.RefreshTokenModel{
-		Token:     tokens.RefreshToken,
-		UserId:    id,
-		ExpiresAt: tokens.RefreshTokenExpiration,
-	})
+	_, err = db.Exec(
+		context.Background(),
+		"INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES ($1, $2, $3)",
+		tokens.RefreshToken,
+		id,
+		tokens.RefreshTokenExpiration,
+	)
 	if err != nil {
 		return nil, err
 	}
