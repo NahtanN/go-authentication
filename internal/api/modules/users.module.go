@@ -13,7 +13,7 @@ func UsersModule(router *router.ApiRouter) {
 	router.SetRoute(
 		"GET",
 		utils.SetSubRoute(usersRootRoute, "/current"),
-		users_handlers.NewCurrentUserHttpHandler(router.DB).Server,
-		middlewares.NewJWTValidationHttpHandler().Serve,
+		users_handlers.NewCurrentUserHttpHandler(router.DB),
+		middlewares.NewJWTValidationHttpHandler(),
 	)
 }

@@ -8,10 +8,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type (
-	FuncHandler           func(w http.ResponseWriter, r *http.Request) error
-	MiddlewareFuncHandler func(w http.ResponseWriter, r *http.Request) (*http.Request, bool, error)
-)
+type FuncHandler interface {
+	Serve(w http.ResponseWriter, r *http.Request) error
+}
+
+type MiddlewareFuncHandler interface {
+	Serve(w http.ResponseWriter, r *http.Request) (*http.Request, bool, error)
+}
 
 type ApiRouterModule func(router *ApiRouter)
 
@@ -59,7 +62,7 @@ func httpHandler(fn FuncHandler, middlewares ...MiddlewareFuncHandler) http.Hand
 
 		req := r
 		for _, middleware := range middlewares {
-			newReq, next, err := middleware(w, req)
+			newReq, next, err := middleware.Serve(w, req)
 			if err != nil {
 				http.Error(w, "Server Error", status)
 			}
@@ -71,7 +74,7 @@ func httpHandler(fn FuncHandler, middlewares ...MiddlewareFuncHandler) http.Hand
 			req = newReq
 		}
 
-		err := fn(w, req)
+		err := fn.Serve(w, req)
 		if err != nil {
 			http.Error(w, "Server error", status)
 		}

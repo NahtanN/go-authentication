@@ -12,16 +12,16 @@ func AuthModule(router *router.ApiRouter) {
 	router.SetRoute(
 		"POST",
 		utils.SetSubRoute(authRootRoute, "/signin"),
-		auth_handlers.NewSignInHttpHandler(router.DB).Serve,
+		auth_handlers.NewSignInHttpHandler(router.DB),
 	)
 	router.SetRoute(
 		"POST",
 		utils.SetSubRoute(authRootRoute, "/signup"),
-		auth_handlers.NewSignUpHttpHandler(router.DB).Serve,
+		auth_handlers.NewSignUpHttpHandler(router.DB),
 	)
 	router.SetRoute(
 		"POST",
 		utils.SetSubRoute(authRootRoute, "/refresh-token"),
-		auth_handlers.NewRefreshTokenHttpHandler(router.DB).Serve,
+		auth_handlers.NewRefreshTokenHttpHandler(router.DB),
 	)
 }

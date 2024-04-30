@@ -21,7 +21,7 @@ func NewCurrentUserHttpHandler(db *pgxpool.Pool) *CurrentUserHttpHandler {
 	}
 }
 
-func (handler *CurrentUserHttpHandler) Server(w http.ResponseWriter, r *http.Request) error {
+func (handler *CurrentUserHttpHandler) Serve(w http.ResponseWriter, r *http.Request) error {
 	userId := r.Context().Value(context_values.UserIdKey)
 
 	if userId == nil {
