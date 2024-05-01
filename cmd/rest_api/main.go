@@ -1,4 +1,4 @@
-package restApi
+package rest_api
 
 import (
 	"context"
@@ -12,6 +12,11 @@ import (
 
 	"github.com/nahtann/go-lab/internal/api/modules"
 	"github.com/nahtann/go-lab/internal/api/router"
+)
+
+var (
+	PORT      = ":3333"
+	ROOT_PATH = "/api"
 )
 
 func RunServer() {
@@ -32,10 +37,11 @@ func RunServer() {
 
 	mux := http.NewServeMux()
 
-	apiRouter := router.NewApiRouter(mux, "/api", dbpool)
+	apiRouter := router.NewApiRouter(mux, ROOT_PATH, dbpool)
 
 	modules := []router.ApiRouterModule{modules.AuthModule, modules.UsersModule}
 	apiRouter.SetModules(modules)
 
-	log.Fatal(http.ListenAndServe(":3333", mux))
+	fmt.Printf("Server start on: http://localhost%s%s", PORT, ROOT_PATH)
+	log.Fatal(http.ListenAndServe(PORT, mux))
 }
