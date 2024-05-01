@@ -1,6 +1,6 @@
 package api
 
-import "github.com/nahtann/go-authentication/internal/api/router"
+import "github.com/nahtann/go-lab/internal/api/router"
 
 type ApiRouter interface {
 	SetModules(modules []router.ApiRouterModule)

@@ -1,4 +1,4 @@
-module github.com/nahtann/go-authentication
+module github.com/nahtann/go-lab
 
 go 1.22.0
 

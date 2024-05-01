@@ -10,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/nahtann/go-authentication/internal/utils"
+	"github.com/nahtann/go-lab/internal/utils"
 )
 
 type SignInHttpHandler struct {
