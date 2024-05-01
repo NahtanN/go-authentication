@@ -1,9 +1,9 @@
 package modules
 
 import (
-	"github.com/nahtann/go-authentication/internal/api/router"
-	"github.com/nahtann/go-authentication/internal/handlers/auth_handlers"
-	"github.com/nahtann/go-authentication/internal/utils"
+	"github.com/nahtann/go-lab/internal/api/router"
+	"github.com/nahtann/go-lab/internal/handlers/auth_handlers"
+	"github.com/nahtann/go-lab/internal/utils"
 )
 
 const authRootRoute = "/auth"

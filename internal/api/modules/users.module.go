@@ -1,10 +1,10 @@
 package modules
 
 import (
-	"github.com/nahtann/go-authentication/internal/api/router"
-	"github.com/nahtann/go-authentication/internal/handlers/users_handlers"
-	"github.com/nahtann/go-authentication/internal/middlewares"
-	"github.com/nahtann/go-authentication/internal/utils"
+	"github.com/nahtann/go-lab/internal/api/router"
+	"github.com/nahtann/go-lab/internal/handlers/users_handlers"
+	"github.com/nahtann/go-lab/internal/middlewares"
+	"github.com/nahtann/go-lab/internal/utils"
 )
 
 const usersRootRoute = "/users"

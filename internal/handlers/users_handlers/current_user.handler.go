@@ -6,9 +6,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/nahtann/go-authentication/internal/context_values"
-	"github.com/nahtann/go-authentication/internal/storage/database/models"
-	"github.com/nahtann/go-authentication/internal/utils"
+	"github.com/nahtann/go-lab/internal/context_values"
+	"github.com/nahtann/go-lab/internal/storage/database/models"
+	"github.com/nahtann/go-lab/internal/utils"
 )
 
 type CurrentUserHttpHandler struct {

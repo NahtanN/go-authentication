@@ -9,8 +9,8 @@ import (
 
 	"github.com/golang-jwt/jwt"
 
-	"github.com/nahtann/go-authentication/internal/context_values"
-	"github.com/nahtann/go-authentication/internal/utils"
+	"github.com/nahtann/go-lab/internal/context_values"
+	"github.com/nahtann/go-lab/internal/utils"
 )
 
 type JWTValidationHttpHandler struct{}

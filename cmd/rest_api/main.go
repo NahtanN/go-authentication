@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
-	"github.com/nahtann/go-authentication/internal/api/modules"
-	"github.com/nahtann/go-authentication/internal/api/router"
+	"github.com/nahtann/go-lab/internal/api/modules"
+	"github.com/nahtann/go-lab/internal/api/router"
 )
 
 func RunServer() {

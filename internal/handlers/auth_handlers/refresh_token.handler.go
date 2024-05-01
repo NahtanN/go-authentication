@@ -7,8 +7,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/nahtann/go-authentication/internal/middlewares"
-	"github.com/nahtann/go-authentication/internal/utils"
+	"github.com/nahtann/go-lab/internal/middlewares"
+	"github.com/nahtann/go-lab/internal/utils"
 )
 
 type RefreshTokenHttpHandler struct {
