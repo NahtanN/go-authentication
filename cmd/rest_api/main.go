@@ -14,12 +14,7 @@ import (
 	"github.com/nahtann/go-lab/internal/api/router"
 )
 
-var (
-	PORT      = ":3333"
-	ROOT_PATH = "/api"
-)
-
-func RunServer() {
+func RunServer(port, rootPath string) {
 	// load .env variables
 	err := godotenv.Load()
 	if err != nil {
@@ -37,11 +32,11 @@ func RunServer() {
 
 	mux := http.NewServeMux()
 
-	apiRouter := router.NewApiRouter(mux, ROOT_PATH, dbpool)
+	apiRouter := router.NewApiRouter(mux, rootPath, dbpool)
 
 	modules := []router.ApiRouterModule{modules.AuthModule, modules.UsersModule}
 	apiRouter.SetModules(modules)
 
-	fmt.Printf("Server start on: http://localhost%s%s", PORT, ROOT_PATH)
-	log.Fatal(http.ListenAndServe(PORT, mux))
+	fmt.Printf("Server start on: http://localhost%s%s", port, rootPath)
+	log.Fatal(http.ListenAndServe(port, mux))
 }
