@@ -24,6 +24,15 @@ func (m *JWTValidationHttpHandler) Serve(
 	r *http.Request,
 ) (*http.Request, bool, error) {
 	bearer := r.Header.Get("Authorization")
+
+	if bearer == "" {
+		message := &utils.DefaultResponse{
+			Message: "Unable to validate token.",
+		}
+
+		return nil, false, utils.WriteJSON(w, 401, message)
+	}
+
 	token := strings.Split(bearer, " ")[1]
 
 	tokenData, valid := ValidateJWT(token)
