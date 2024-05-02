@@ -18,16 +18,24 @@ type SignInHttpHandler struct {
 }
 
 type SigninRequest struct {
-	User     string `json:"user"     validate:"required"`
-	Password string `json:"password" validate:"required"`
+	User     string `json:"user"     validate:"required" example:"nahtann@outlook.com"`
+	Password string `json:"password" validate:"required" example:"#Asdf123"`
 }
 
 type Tokens struct {
-	AccessToken            string    `json:"accessToken"`
-	RefreshToken           string    `json:"refreshToken"`
+	AccessToken            string    `json:"accessToken"  example:"eyJhbGciOiJIUzI1N..."`
+	RefreshToken           string    `json:"refreshToken" example:"eyJhbGciOiJIUzI1N..."`
 	RefreshTokenExpiration time.Time `json:"-"`
 }
 
+//	@Description	Authenticate user and returns access and refresh tokens.
+//	@Tags			auth
+//	@Accept			json
+//	@Param			request	body	SigninRequest	true	"Request Body"
+//	@Produce		json
+//	@Success		201	{object}	Tokens
+//	@Failure		400	{object}	utils.CustomError	"Message: 'User or password invalid.'"
+//	@router			/auth/sign-in   [post]
 func NewSignInHttpHandler(
 	db *pgxpool.Pool,
 ) *SignInHttpHandler {

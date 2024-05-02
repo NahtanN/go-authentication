@@ -16,9 +16,17 @@ type RefreshTokenHttpHandler struct {
 }
 
 type RefreshTokenRequest struct {
-	Token string `json:"token" validate:"required"`
+	Token string `json:"token" validate:"required" example:"eyJhbGciOiJIUzI1NiIsInR5..."`
 }
 
+//	@Description	Creates a new pair of access and refresh tokens.
+//	@Tags			auth
+//	@Accept			json
+//	@Param			request	body	RefreshTokenRequest	true	"Request Body"
+//	@Produce		json
+//	@Success		201	{object}	Tokens
+//	@Failure		401	{object}	utils.CustomError	"Message: 'Invalid Request'"
+//	@router			/auth/refresh-token [post]
 func NewRefreshTokenHttpHandler(db *pgxpool.Pool) *RefreshTokenHttpHandler {
 	return &RefreshTokenHttpHandler{
 		DB: db,

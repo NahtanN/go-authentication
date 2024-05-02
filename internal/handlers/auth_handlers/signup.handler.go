@@ -17,11 +17,19 @@ type SignUpHttpHandler struct {
 }
 
 type SignupRequest struct {
-	Username string `json:"username" validate:"required"`
-	Email    string `json:"email"    validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Username string `json:"username" validate:"required" example:"NahtanN"`
+	Email    string `json:"email"    validate:"required" example:"nahtann@outlook.com"`
+	Password string `json:"password" validate:"required" example:"#Asdf123"`
 }
 
+//	@Description	Creates new user.
+//	@Tags			auth
+//	@Accept			json
+//	@Param			request	body	SignupRequest	true	"Request Body"
+//	@Produce		json
+//	@Success		201	{object}	utils.DefaultResponse	"Message: 'Sign up successfully'"
+//	@Failure		400	{object}	utils.CustomError		"Message: 'Username already in use. E-mail already in use.'"
+//	@router			/auth/sign-up   [post]
 func NewSignUpHttpHandler(db *pgxpool.Pool) *SignUpHttpHandler {
 	return &SignUpHttpHandler{
 		DB: db,

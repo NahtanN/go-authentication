@@ -1,22 +1,179 @@
-basePath: /api/v1
-externalDocs:
-  description: OpenAPI
-  url: https://swagger.io/resources/open-api/
-host: localhost:8080
+basePath: /api
+definitions:
+  auth_handlers.RefreshTokenRequest:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5...
+        type: string
+    required:
+    - token
+    type: object
+  auth_handlers.SigninRequest:
+    properties:
+      password:
+        example: '#Asdf123'
+        type: string
+      user:
+        example: nahtann@outlook.com
+        type: string
+    required:
+    - password
+    - user
+    type: object
+  auth_handlers.SignupRequest:
+    properties:
+      email:
+        example: nahtann@outlook.com
+        type: string
+      password:
+        example: '#Asdf123'
+        type: string
+      username:
+        example: NahtanN
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  auth_handlers.Tokens:
+    properties:
+      accessToken:
+        example: eyJhbGciOiJIUzI1N...
+        type: string
+      refreshToken:
+        example: eyJhbGciOiJIUzI1N...
+        type: string
+    type: object
+  models.UserModel:
+    properties:
+      createdAt:
+        example: "2024-05-02T00:10:10.875334-03:00"
+        type: string
+      email:
+        example: nahtann@outlook.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      username:
+        example: NahtanN
+        type: string
+    type: object
+  utils.CustomError:
+    properties:
+      message:
+        type: string
+    type: object
+  utils.DefaultResponse:
+    properties:
+      message:
+        type: string
+    type: object
+host: localhost:3333
 info:
   contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: This is a sample server.
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
-  title: Swagger Example API
+    email: nahtann@outlook.com
+    name: NahtanN
+    url: https://www.linkedin.com/in/nahtann/
+  description: Golang API service. It`s just for studies purposes.
+  title: Go-Lab API
   version: "1.0"
-paths: {}
+paths:
+  /auth/refresh-token:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new pair of access and refresh tokens.
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth_handlers.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auth_handlers.Tokens'
+        "401":
+          description: 'Message: ''Invalid Request'''
+          schema:
+            $ref: '#/definitions/utils.CustomError'
+      tags:
+      - auth
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and returns access and refresh tokens.
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth_handlers.SigninRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auth_handlers.Tokens'
+        "400":
+          description: 'Message: ''User or password invalid.'''
+          schema:
+            $ref: '#/definitions/utils.CustomError'
+      tags:
+      - auth
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Creates new user.
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth_handlers.SignupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'Message: ''Sign up successfully'''
+          schema:
+            $ref: '#/definitions/utils.DefaultResponse'
+        "400":
+          description: 'Message: ''Username already in use. E-mail already in use.'''
+          schema:
+            $ref: '#/definitions/utils.CustomError'
+      tags:
+      - auth
+  /users/current:
+    get:
+      description: Must be authenticated
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserModel'
+      security:
+      - ApiKeyAuth: []
+      summary: Get current user data.
+      tags:
+      - users
 securityDefinitions:
-  BasicAuth:
-    type: basic
+  ApiKeyAuth:
+    description: 'Example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
