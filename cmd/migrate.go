@@ -1,6 +1,12 @@
 package cmd
 
 import (
+	"bytes"
+	"fmt"
+	"os"
+	"os/exec"
+
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
@@ -14,16 +20,25 @@ var migrate = &cobra.Command{
 	Use:   "migrate",
 	Short: "Manage migration files",
 	Run: func(cmd *cobra.Command, args []string) {
+		// load .env variables
+		err := godotenv.Load()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading .env file")
+			os.Exit(1)
+		}
+
 		if create != "" {
 			createMigration(create)
 			return
 		}
 
 		if up {
+			runMigrations("up")
 			return
 		}
 
 		if down {
+			runMigrations("down")
 			return
 		}
 	},
@@ -41,30 +56,52 @@ func init() {
 }
 
 func createMigration(fileName string) {
-	// migrationsDir := "internal/storage/database/migrations"
+	migrationsPath := os.Getenv("DATABASE_MIGRATIONS_PATH")
 
-	/*err := exec.Command("/bin/sh", "-c", "cd internal/storage/database/migrations && migrate create -ext sql teeessssssstttt").*/
-	/*Run()*/
-	/*if err != nil {*/
-	/*fmt.Printf("Error executing command: %s\n", err)*/
-	/*return*/
-	/*}*/
+	command := fmt.Sprintf(
+		"migrate create -dir %s -ext sql %s",
+		migrationsPath,
+		fileName,
+	)
 
-	//fmt.Println(string(out))
-	/*if fileName != "" {*/
-	/*create := "touch"*/
+	err := exec.Command("/bin/sh", "-c", command).
+		Run()
+	if err != nil {
+		fmt.Printf("Error executing command: %s\n", err)
+		return
+	}
 
-	/*out, err := exec.Command(create, fileName).Output()*/
-	/*if err != nil {*/
-	/*fmt.Printf("Error executing command: %s\n", err)*/
-	/*return*/
-	/*}*/
-
-	/*} else {*/
-	/*fmt.Println("file does not set")*/
-	/*}*/
+	fmt.Printf("Migration file `%s` created successfully.\n", fileName)
 }
 
-func upMigrations() {}
+func runMigrations(direction string) {
+	if direction != "up" && direction != "down" {
+		fmt.Println("Migrations should be 'up' or 'down'")
+		return
+	}
 
-func downMigrations() {}
+	databaseUrl := os.Getenv("DATABASE_URL")
+	migrationsPath := os.Getenv("DATABASE_MIGRATIONS_PATH")
+
+	command := fmt.Sprintf(
+		"migrate -path ./%s -database '%s' %s",
+		migrationsPath,
+		databaseUrl,
+		direction,
+	)
+
+	cmd := exec.Command("/bin/sh", "-c", command)
+
+	if direction == "down" {
+		input := bytes.NewBufferString("y")
+		cmd.Stdin = input
+	}
+
+	out, err := cmd.Output()
+	if err != nil {
+		fmt.Printf("Error executing command: %s\n", err)
+		return
+	}
+
+	fmt.Printf("Migration %s successfully.\n%s", direction, string(out))
+}
