@@ -1,9 +1,7 @@
 package main
 
-import (
-	restApi "github.com/nahtann/go-lab/cmd/rest_api"
-)
+import "github.com/nahtann/go-lab/cmd"
 
 func main() {
-	restApi.RunServer()
+	cmd.Execute()
 }
