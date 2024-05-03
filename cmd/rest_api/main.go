@@ -16,7 +16,7 @@ import (
 	"github.com/nahtann/go-lab/internal/api/router"
 )
 
-func RunServer(port, rootPath string) {
+func RunServer(port, rootPath string, swagger bool) {
 	// load .env variables
 	err := godotenv.Load()
 	if err != nil {
@@ -34,9 +34,11 @@ func RunServer(port, rootPath string) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:3333/swagger/doc.json"),
-	))
+	if swagger {
+		mux.HandleFunc("GET /swagger/*", httpSwagger.Handler(
+			httpSwagger.URL("http://localhost:3333/swagger/doc.json"),
+		))
+	}
 
 	apiRouter := router.NewApiRouter(mux, rootPath, dbpool)
 

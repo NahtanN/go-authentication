@@ -19,6 +19,7 @@ var (
 var migrate = &cobra.Command{
 	Use:   "migrate",
 	Short: "Manage migration files",
+	Long:  "You should have migrate cli installed and it`s binary should be exported to $PATH. https://github.com/golang-migrate/migrate",
 	Run: func(cmd *cobra.Command, args []string) {
 		// load .env variables
 		err := godotenv.Load()
