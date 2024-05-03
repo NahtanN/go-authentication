@@ -15,6 +15,13 @@ type CurrentUserHttpHandler struct {
 	DB *pgxpool.Pool
 }
 
+//	@Summary		Get current user data.
+//	@Description	Must be authenticated
+//	@Tags			users
+//	@Produce		json
+//	@Success		200	{object}	models.UserModel
+//	@router			/users/current [get]
+//	@Security		ApiKeyAuth
 func NewCurrentUserHttpHandler(db *pgxpool.Pool) *CurrentUserHttpHandler {
 	return &CurrentUserHttpHandler{
 		DB: db,

@@ -9,12 +9,14 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	httpSwagger "github.com/swaggo/http-swagger"
 
+	_ "github.com/nahtann/go-lab/docs"
 	"github.com/nahtann/go-lab/internal/api/modules"
 	"github.com/nahtann/go-lab/internal/api/router"
 )
 
-func RunServer(port, rootPath string) {
+func RunServer(port, rootPath string, swagger bool) {
 	// load .env variables
 	err := godotenv.Load()
 	if err != nil {
@@ -31,6 +33,12 @@ func RunServer(port, rootPath string) {
 	defer dbpool.Close()
 
 	mux := http.NewServeMux()
+
+	if swagger {
+		mux.HandleFunc("GET /swagger/*", httpSwagger.Handler(
+			httpSwagger.URL("http://localhost:3333/swagger/doc.json"),
+		))
+	}
 
 	apiRouter := router.NewApiRouter(mux, rootPath, dbpool)
 
