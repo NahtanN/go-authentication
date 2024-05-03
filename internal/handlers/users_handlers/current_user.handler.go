@@ -4,25 +4,24 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/nahtann/go-lab/internal/context_values"
+	"github.com/nahtann/go-lab/internal/interfaces"
 	"github.com/nahtann/go-lab/internal/storage/database/models"
 	"github.com/nahtann/go-lab/internal/utils"
 )
 
 type CurrentUserHttpHandler struct {
-	DB *pgxpool.Pool
+	DB interfaces.Pgx
 }
 
-//	@Summary		Get current user data.
-//	@Description	Must be authenticated
-//	@Tags			users
-//	@Produce		json
-//	@Success		200	{object}	models.UserModel
-//	@router			/users/current [get]
-//	@Security		ApiKeyAuth
-func NewCurrentUserHttpHandler(db *pgxpool.Pool) *CurrentUserHttpHandler {
+// @Summary		Get current user data.
+// @Description	Must be authenticated
+// @Tags			users
+// @Produce		json
+// @Success		200	{object}	models.UserModel
+// @router			/users/current [get]
+// @Security		ApiKeyAuth
+func NewCurrentUserHttpHandler(db interfaces.Pgx) *CurrentUserHttpHandler {
 	return &CurrentUserHttpHandler{
 		DB: db,
 	}
@@ -47,7 +46,7 @@ func (handler *CurrentUserHttpHandler) Serve(w http.ResponseWriter, r *http.Requ
 	return utils.WriteJSON(w, http.StatusOK, user)
 }
 
-func CurrentUser(db *pgxpool.Pool, id uint32) (*models.UserModel, error) {
+func CurrentUser(db interfaces.Pgx, id uint32) (*models.UserModel, error) {
 	user := models.UserModel{
 		Id: id,
 	}
