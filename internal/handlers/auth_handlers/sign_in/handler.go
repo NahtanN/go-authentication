@@ -1,27 +1,18 @@
-package auth_handlers
+package sign_in
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
+	"fmt"
 
 	"github.com/nahtann/go-lab/internal/interfaces"
 	"github.com/nahtann/go-lab/internal/utils"
 	auth_utils "github.com/nahtann/go-lab/internal/utils/auth"
 )
 
-type SignInHandler struct {
+type Handler struct {
 	DB              interfaces.Pgx
 	VerifyPassword  func(password, hashedPassword string) (bool, error)
 	CreateJwtTokens func(id uint32) (*auth_utils.Tokens, error)
-}
-
-type SingInHandlerInterface interface {
-	Exec(request *SigninRequest) (*auth_utils.Tokens, error)
-}
-
-type SignInHttpHandler struct {
-	SignInHandler
 }
 
 type SigninRequest struct {
@@ -29,54 +20,7 @@ type SigninRequest struct {
 	Password string `json:"password" validate:"required" example:"#Asdf123"`
 }
 
-// @Description	Authenticate user and returns access and refresh tokens.
-// @Tags			auth
-// @Accept			json
-// @Param			request	body	SigninRequest	true	"Request Body"
-// @Produce		json
-// @Success		201	{object}	Tokens
-// @Failure		400	{object}	utils.CustomError	"Message: 'User or password invalid.'"
-// @router			/auth/sign-in   [post]
-func NewSignInHttpHandler(
-	db interfaces.Pgx,
-) *SignInHttpHandler {
-	signInHandler := SignInHandler{
-		DB:              db,
-		VerifyPassword:  utils.VerifyPassword,
-		CreateJwtTokens: auth_utils.CreateJwtTokens,
-	}
-
-	return &SignInHttpHandler{
-		SignInHandler: signInHandler,
-	}
-}
-
-func (h *SignInHttpHandler) Serve(w http.ResponseWriter, r *http.Request) error {
-	request := new(SigninRequest)
-
-	err := json.NewDecoder(r.Body).Decode(request)
-	if err != nil {
-		return utils.HttpServerInvalidRequest(w)
-	}
-
-	errorMessages := utils.Validate(request)
-	if errorMessages != "" {
-		message := utils.DefaultResponse{
-			Message: errorMessages,
-		}
-
-		return utils.WriteJSON(w, http.StatusBadRequest, message)
-	}
-
-	tokens, err := h.Exec(request)
-	if err != nil {
-		return utils.WriteJSON(w, http.StatusBadRequest, err)
-	}
-
-	return utils.WriteJSON(w, http.StatusCreated, tokens)
-}
-
-func (handler *SignInHandler) Exec(
+func (handler *Handler) Exec(
 	request *SigninRequest,
 ) (*auth_utils.Tokens, error) {
 	rows, err := handler.DB.Query(
@@ -95,6 +39,7 @@ func (handler *SignInHandler) Exec(
 	for rows.Next() {
 		err := rows.Scan(&id, &password)
 		if err != nil {
+			fmt.Println(err)
 			return nil, &utils.CustomError{
 				Message: "Unable to parse data.",
 			}
@@ -122,7 +67,7 @@ func (handler *SignInHandler) Exec(
 	tokens, err := handler.CreateJwtTokens(id)
 	if err != nil {
 		return nil, &utils.CustomError{
-			Message: "Unable to generate access token.",
+			Message: "Unable to create access token.",
 		}
 	}
 
@@ -135,7 +80,9 @@ func (handler *SignInHandler) Exec(
 		tokens.RefreshTokenExpiration,
 	)
 	if err != nil {
-		return nil, err
+		return nil, &utils.CustomError{
+			Message: "Internal error.",
+		}
 	}
 
 	return tokens, nil

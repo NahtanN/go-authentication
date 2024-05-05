@@ -9,6 +9,7 @@ import (
 
 	"github.com/nahtann/go-lab/internal/middlewares"
 	"github.com/nahtann/go-lab/internal/utils"
+	auth_utils "github.com/nahtann/go-lab/internal/utils/auth"
 )
 
 type RefreshTokenHttpHandler struct {
@@ -19,14 +20,14 @@ type RefreshTokenRequest struct {
 	Token string `json:"token" validate:"required" example:"eyJhbGciOiJIUzI1NiIsInR5..."`
 }
 
-//	@Description	Creates a new pair of access and refresh tokens.
-//	@Tags			auth
-//	@Accept			json
-//	@Param			request	body	RefreshTokenRequest	true	"Request Body"
-//	@Produce		json
-//	@Success		201	{object}	Tokens
-//	@Failure		401	{object}	utils.CustomError	"Message: 'Invalid Request'"
-//	@router			/auth/refresh-token [post]
+// @Description	Creates a new pair of access and refresh tokens.
+// @Tags			auth
+// @Accept			json
+// @Param			request	body	RefreshTokenRequest	true	"Request Body"
+// @Produce		json
+// @Success		201	{object}	Tokens
+// @Failure		401	{object}	utils.CustomError	"Message: 'Invalid Request'"
+// @router			/auth/refresh-token [post]
 func NewRefreshTokenHttpHandler(db *pgxpool.Pool) *RefreshTokenHttpHandler {
 	return &RefreshTokenHttpHandler{
 		DB: db,
@@ -61,7 +62,7 @@ func (handler *RefreshTokenHttpHandler) Serve(w http.ResponseWriter, r *http.Req
 func RefreshToken(
 	db *pgxpool.Pool,
 	tokenString string,
-) (*Tokens, error) {
+) (*auth_utils.Tokens, error) {
 	token, valid := middlewares.ValidateJWT(tokenString)
 
 	if !valid || !token.Valid {
@@ -126,8 +127,8 @@ func InvalidateUserRefreshTokens(
 func UpdateUserRefreshToken(
 	db *pgxpool.Pool,
 	userId, parentTokenId uint32,
-) (*Tokens, error) {
-	tokens, err := GenerateTokens(userId)
+) (*auth_utils.Tokens, error) {
+	tokens, err := auth_utils.CreateJwtTokens(userId)
 	if err != nil {
 		return nil, &utils.CustomError{
 			Message: "Unable to generate access token.",

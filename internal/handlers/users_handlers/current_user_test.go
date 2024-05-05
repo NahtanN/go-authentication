@@ -1,8 +1,6 @@
 package users_handlers
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -11,24 +9,8 @@ import (
 
 	"github.com/nahtann/go-lab/internal/storage/database/models"
 	"github.com/nahtann/go-lab/internal/utils"
+	"github.com/nahtann/go-lab/internal/utils/mocks"
 )
-
-// Compare deep equality between two json objects.
-func assertJSON(received interface{}, expected interface{}, t *testing.T) {
-	expectedJson, err := json.Marshal(expected)
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when marshaling expected json data", err)
-	}
-
-	receivedJson, err := json.Marshal(received)
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when marshaling receive json data", err)
-	}
-
-	if !bytes.Equal(expectedJson, receivedJson) {
-		t.Errorf("the expected json: %s is different from received %s", expectedJson, receivedJson)
-	}
-}
 
 func TestShouldGetCurrentUser(t *testing.T) {
 	user := models.UserModel{
@@ -58,7 +40,7 @@ func TestShouldGetCurrentUser(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when trying to get current user", err)
 	}
 
-	assertJSON(responseUser, user, t)
+	mocks.AssertJSON(responseUser, user, t)
 }
 
 func TestShouldFailOnParseDbData(t *testing.T) {
@@ -91,7 +73,7 @@ func TestShouldFailOnParseDbData(t *testing.T) {
 		Message: "Unable to parse current user data.",
 	}
 
-	assertJSON(err, expected, t)
+	mocks.AssertJSON(err, expected, t)
 }
 
 func TestShouldFailOnDbError(t *testing.T) {
@@ -116,5 +98,5 @@ func TestShouldFailOnDbError(t *testing.T) {
 		Message: "Unable to retrieve current user data.",
 	}
 
-	assertJSON(err, expected, t)
+	mocks.AssertJSON(err, expected, t)
 }
