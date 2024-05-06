@@ -8,35 +8,7 @@ definitions:
     required:
     - token
     type: object
-  auth_handlers.SigninRequest:
-    properties:
-      password:
-        example: '#Asdf123'
-        type: string
-      user:
-        example: nahtann@outlook.com
-        type: string
-    required:
-    - password
-    - user
-    type: object
-  auth_handlers.SignupRequest:
-    properties:
-      email:
-        example: nahtann@outlook.com
-        type: string
-      password:
-        example: '#Asdf123'
-        type: string
-      username:
-        example: NahtanN
-        type: string
-    required:
-    - email
-    - password
-    - username
-    type: object
-  auth_handlers.Tokens:
+  auth_utils.Tokens:
     properties:
       accessToken:
         example: eyJhbGciOiJIUzI1N...
@@ -59,6 +31,34 @@ definitions:
       username:
         example: NahtanN
         type: string
+    type: object
+  sign_in.SigninRequest:
+    properties:
+      password:
+        example: '#Asdf123'
+        type: string
+      user:
+        example: nahtann@outlook.com
+        type: string
+    required:
+    - password
+    - user
+    type: object
+  sign_up.SignupRequest:
+    properties:
+      email:
+        example: nahtann@outlook.com
+        type: string
+      password:
+        example: '#Asdf123'
+        type: string
+      username:
+        example: NahtanN
+        type: string
+    required:
+    - email
+    - password
+    - username
     type: object
   utils.CustomError:
     properties:
@@ -98,7 +98,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/auth_handlers.Tokens'
+            $ref: '#/definitions/auth_utils.Tokens'
         "401":
           description: 'Message: ''Invalid Request'''
           schema:
@@ -116,14 +116,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth_handlers.SigninRequest'
+          $ref: '#/definitions/sign_in.SigninRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/auth_handlers.Tokens'
+            $ref: '#/definitions/auth_utils.Tokens'
         "400":
           description: 'Message: ''User or password invalid.'''
           schema:
@@ -141,7 +141,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth_handlers.SignupRequest'
+          $ref: '#/definitions/sign_up.SignupRequest'
       produces:
       - application/json
       responses:

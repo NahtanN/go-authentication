@@ -25,7 +25,7 @@ type RefreshTokenRequest struct {
 // @Accept			json
 // @Param			request	body	RefreshTokenRequest	true	"Request Body"
 // @Produce		json
-// @Success		201	{object}	Tokens
+// @Success		201	{object}	auth_utils.Tokens
 // @Failure		401	{object}	utils.CustomError	"Message: 'Invalid Request'"
 // @router			/auth/refresh-token [post]
 func NewRefreshTokenHttpHandler(db *pgxpool.Pool) *RefreshTokenHttpHandler {

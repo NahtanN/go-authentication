@@ -22,7 +22,7 @@ type HttpWrapper struct {
 // @Accept			json
 // @Param			request	body	SigninRequest	true	"Request Body"
 // @Produce		json
-// @Success		201	{object}	Tokens
+// @Success		201	{object}	auth_utils.Tokens
 // @Failure		400	{object}	utils.CustomError	"Message: 'User or password invalid.'"
 // @router			/auth/sign-in   [post]
 func (wrapper *HttpWrapper) Serve(w http.ResponseWriter, r *http.Request) error {
