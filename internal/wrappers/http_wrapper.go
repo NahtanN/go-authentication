@@ -11,13 +11,16 @@ type HandlerInterface[K interface{}, V interface{}] interface {
 	Exec(*K) (*V, error)
 }
 
-type HttpWrapper[T interface{}, R interface{}] struct {
-	Handler         HandlerInterface[T, R]
+// HttpWrapper expects two type definitions.
+// R (the first one) should be of type Handler Request
+// E (the second one) should be of type handler Exec return value
+type HttpWrapper[R interface{}, E interface{}] struct {
+	Handler         HandlerInterface[R, E]
 	ValidateRequest func(s any) string
 }
 
-func (wrapper *HttpWrapper[T, R]) Serve(w http.ResponseWriter, r *http.Request) error {
-	request := new(T)
+func (wrapper *HttpWrapper[R, E]) Serve(w http.ResponseWriter, r *http.Request) error {
+	request := new(R)
 
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {

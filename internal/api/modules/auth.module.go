@@ -4,7 +4,6 @@ import (
 	"github.com/nahtann/go-lab/internal/api/router"
 	"github.com/nahtann/go-lab/internal/handlers/auth_handlers/sign_in"
 	"github.com/nahtann/go-lab/internal/handlers/auth_handlers/sign_up"
-	"github.com/nahtann/go-lab/internal/interfaces"
 	"github.com/nahtann/go-lab/internal/utils"
 	auth_utils "github.com/nahtann/go-lab/internal/utils/auth"
 	"github.com/nahtann/go-lab/internal/wrappers"
@@ -13,18 +12,8 @@ import (
 const authRootRoute = "/auth"
 
 func AuthModule(router *router.ApiRouter) {
-	router.SetRoute(
-		"POST",
-		utils.SetSubRoute(authRootRoute, "/sign-in"),
-		signInRoute(router.DB),
-	)
-
+	signInRoute(router)
 	signUpRoute(router)
-	/* router.SetRoute(*/
-	/*"POST",*/
-	/*utils.SetSubRoute(authRootRoute, "/sign-up"),*/
-	/*auth_handlers.NewSignUpHttpHandler(router.DB),*/
-	/*)*/
 	/*router.SetRoute(*/
 	/*"POST",*/
 	/*utils.SetSubRoute(authRootRoute, "/refresh-token"),*/
@@ -32,19 +21,31 @@ func AuthModule(router *router.ApiRouter) {
 	/*)*/
 }
 
-func signInRoute(db interfaces.Pgx) *sign_in.HttpWrapper {
+// @Description	Authenticate user and returns access and refresh tokens.
+// @Tags			auth
+// @Accept			json
+// @Param			request	body	SigninRequest	true	"Request Body"
+// @Produce		json
+// @Success		201	{object}	auth_utils.Tokens
+// @Failure		400	{object}	utils.CustomError	"Message: 'User or password invalid.'"
+// @router			/auth/sign-in   [post]
+func signInRoute(router *router.ApiRouter) {
 	signIn := sign_in.Handler{
-		DB:              db,
+		DB:              router.DB,
 		VerifyPassword:  utils.VerifyPassword,
 		CreateJwtTokens: auth_utils.CreateJwtTokens,
 	}
 
-	signInHttpWrapper := sign_in.HttpWrapper{
+	httpWrapper := wrappers.HttpWrapper[sign_in.Request, auth_utils.Tokens]{
 		Handler:         &signIn,
 		ValidateRequest: utils.Validate,
 	}
 
-	return &signInHttpWrapper
+	router.SetRoute(
+		"POST",
+		utils.SetSubRoute(authRootRoute, "/sign-in"),
+		&httpWrapper,
+	)
 }
 
 // @Description	Creates new user.

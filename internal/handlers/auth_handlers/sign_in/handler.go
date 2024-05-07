@@ -15,13 +15,13 @@ type Handler struct {
 	CreateJwtTokens func(id uint32) (*auth_utils.Tokens, error)
 }
 
-type SigninRequest struct {
+type Request struct {
 	User     string `json:"user"     validate:"required" example:"nahtann@outlook.com"`
 	Password string `json:"password" validate:"required" example:"#Asdf123"`
 }
 
 func (handler *Handler) Exec(
-	request *SigninRequest,
+	request *Request,
 ) (*auth_utils.Tokens, error) {
 	rows, err := handler.DB.Query(
 		context.Background(),
