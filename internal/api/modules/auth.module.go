@@ -61,7 +61,7 @@ func signUpRoute(router *router.ApiRouter) {
 		HashPassword: utils.HashPassword,
 	}
 
-	httpWrapper := wrappers.HttpWrapper[sign_up.SignupRequest, utils.DefaultResponse]{
+	httpWrapper := wrappers.HttpWrapper[sign_up.Request, utils.DefaultResponse]{
 		Handler:         &signUp,
 		ValidateRequest: utils.Validate,
 	}

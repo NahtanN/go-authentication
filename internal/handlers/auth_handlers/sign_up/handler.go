@@ -14,13 +14,13 @@ type Handler struct {
 	HashPassword func(password string) (string, error)
 }
 
-type SignupRequest struct {
+type Request struct {
 	Username string `json:"username" validate:"required" example:"NahtanN"`
 	Email    string `json:"email"    validate:"required" example:"nahtann@outlook.com"`
 	Password string `json:"password" validate:"required" example:"#Asdf123"`
 }
 
-func (handler *Handler) Exec(request *SignupRequest) (*utils.DefaultResponse, error) {
+func (handler *Handler) Exec(request *Request) (*utils.DefaultResponse, error) {
 	query := "SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(%s) LIKE LOWER($1))"
 
 	errorMessages := []string{}
