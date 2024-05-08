@@ -11,7 +11,7 @@ import (
 	auth_utils "github.com/nahtann/go-lab/internal/utils/auth"
 )
 
-var request = SigninRequest{
+var request = Request{
 	User:     "nahtann@outlook.com",
 	Password: "password",
 }
