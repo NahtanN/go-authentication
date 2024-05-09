@@ -3,6 +3,7 @@ package wrappers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,6 +15,10 @@ import (
 
 type MockRequest struct {
 	Data string `json:"data"`
+}
+
+func MockRequestParserError(*MockRequest, *http.Request) error {
+	return fmt.Errorf("Sone error")
 }
 
 type MockHandler struct{}
@@ -75,7 +80,8 @@ func TestHttpWrapperDecodeError(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	httpWrapper := HttpWrapper[MockRequest, utils.DefaultResponse]{
-		Handler: &MockHandler{},
+		Handler:        &MockHandler{},
+		RequestParsers: []RequestParser[MockRequest]{MockRequestParserError},
 	}
 
 	err = httpWrapper.Serve(w, req)

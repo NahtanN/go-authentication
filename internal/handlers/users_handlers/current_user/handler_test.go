@@ -1,102 +1,119 @@
 package current_user
 
-/*import (*/
-/*"fmt"*/
-/*"testing"*/
-/*"time"*/
+import (
+	"fmt"
+	"testing"
+	"time"
 
-/*"github.com/pashagolub/pgxmock/v3"*/
+	"github.com/pashagolub/pgxmock/v3"
+	"github.com/stretchr/testify/assert"
 
-/*"github.com/nahtann/go-lab/internal/storage/database/models"*/
-/*"github.com/nahtann/go-lab/internal/utils"*/
-/*"github.com/nahtann/go-lab/internal/utils/mocks"*/
-/*)*/
+	"github.com/nahtann/go-lab/internal/storage/database/models"
+)
 
-/*func TestShouldGetCurrentUser(t *testing.T) {*/
-/*user := models.UserModel{*/
-/*Id:        1,*/
-/*Username:  "Test User",*/
-/*Email:     "test@test.com",*/
-/*CreatedAt: time.Now(),*/
-/*}*/
+func TestCurrentUser(t *testing.T) {
+	user := models.UserModel{
+		Id:        1,
+		Username:  "Test User",
+		Email:     "test@test.com",
+		CreatedAt: time.Now(),
+	}
 
-/*mock, err := pgxmock.NewPool(*/
-/*pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual),*/
-/*)*/
-/*if err != nil {*/
-/*t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)*/
-/*}*/
-/*defer mock.Close()*/
+	mock, err := pgxmock.NewPool(
+		pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual),
+	)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mock.Close()
 
-/*rows := mock.NewRows([]string{"username", "email", "created_at"}).*/
-/*AddRow(user.Username, user.Email, user.CreatedAt)*/
+	rows := mock.NewRows([]string{"username", "email", "created_at"}).
+		AddRow(user.Username, user.Email, user.CreatedAt)
 
-/*mock.ExpectQuery("SELECT username, email, created_at FROM users WHERE id = $1").*/
-/*WithArgs(user.Id).*/
-/*WillReturnRows(rows)*/
+	mock.ExpectQuery("SELECT username, email, created_at FROM users WHERE id = $1").
+		WithArgs(user.Id).
+		WillReturnRows(rows)
 
-/*responseUser, err := CurrentUser(mock, user.Id)*/
-/*if err != nil {*/
-/*t.Fatalf("an error '%s' was not expected when trying to get current user", err)*/
-/*}*/
+	handler := Handler{
+		DB: mock,
+	}
 
-/*mocks.AssertJSON(responseUser, user, t)*/
-/*}*/
+	request := Request{
+		ID: 1,
+	}
 
-/*func TestShouldFailOnParseDbData(t *testing.T) {*/
-/*user := models.UserModel{*/
-/*Id:       1,*/
-/*Username: "Test User",*/
-/*}*/
+	response, err := handler.Exec(&request)
 
-/*mock, err := pgxmock.NewPool(*/
-/*pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual),*/
-/*)*/
-/*if err != nil {*/
-/*t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)*/
-/*}*/
-/*defer mock.Close()*/
+	assert.Nil(t, err)
+	assert.NotNil(t, response)
 
-/*rows := mock.NewRows([]string{"1"}).*/
-/*AddRow(user.Username)*/
+	assert.Equal(t, user.Id, response.Id)
+	assert.Equal(t, user.Username, response.Username)
+	assert.Equal(t, user.Email, response.Email)
+	assert.WithinDuration(t, user.CreatedAt, time.Now(), time.Second)
+}
 
-/*mock.ExpectQuery("SELECT username, email, created_at FROM users WHERE id = $1").*/
-/*WithArgs(user.Id).*/
-/*WillReturnRows(rows)*/
+func TestCurrentUserFailOnDbError(t *testing.T) {
+	mock, err := pgxmock.NewPool(
+		pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual),
+	)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mock.Close()
 
-/*_, err = CurrentUser(mock, user.Id)*/
-/*if err == nil {*/
-/*t.Fatalf("Does not triggered error")*/
-/*}*/
+	mock.ExpectQuery("SELECT username, email, created_at FROM users WHERE id = $1").
+		WillReturnError(fmt.Errorf("Some error"))
 
-/*expected := utils.CustomError{*/
-/*Message: "Unable to parse current user data.",*/
-/*}*/
+	handler := Handler{
+		DB: mock,
+	}
 
-/*mocks.AssertJSON(err, expected, t)*/
-/*}*/
+	request := Request{
+		ID: 1,
+	}
 
-/*func TestShouldFailOnDbError(t *testing.T) {*/
-/*mock, err := pgxmock.NewPool(*/
-/*pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual),*/
-/*)*/
-/*if err != nil {*/
-/*t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)*/
-/*}*/
-/*defer mock.Close()*/
+	response, err := handler.Exec(&request)
 
-/*mock.ExpectQuery("SELECT username, email, created_at FROM users WHERE id = $1").*/
-/*WillReturnError(fmt.Errorf("Some error"))*/
+	assert.Nil(t, response)
+	assert.NotNil(t, err)
 
-/*_, err = CurrentUser(mock, 1)*/
+	assert.Equal(t, "Unable to retrieve current user data.", err.Error())
+}
 
-/*if err == nil {*/
-/*t.Fatalf("Does not triggered error")*/
-/*}*/
+func TestCurrentUserParseDbData(t *testing.T) {
+	user := models.UserModel{
+		Id:       1,
+		Username: "Test User",
+	}
 
-/*expected := utils.CustomError{*/
-/*Message: "Unable to retrieve current user data.",*/
-/*}*/
+	mock, err := pgxmock.NewPool(
+		pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual),
+	)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mock.Close()
 
-/*mocks.AssertJSON(err, expected, t)*/
-/*}*/
+	rows := mock.NewRows([]string{"1"}).
+		AddRow(user.Username)
+
+	mock.ExpectQuery("SELECT username, email, created_at FROM users WHERE id = $1").
+		WithArgs(user.Id).
+		WillReturnRows(rows)
+
+	handler := Handler{
+		DB: mock,
+	}
+
+	request := Request{
+		ID: 1,
+	}
+
+	response, err := handler.Exec(&request)
+
+	assert.Nil(t, response)
+	assert.NotNil(t, err)
+
+	assert.Equal(t, "Unable to parse current user data.", err.Error())
+}

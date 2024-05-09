@@ -24,6 +24,7 @@ type HttpWrapper[R interface{}, E interface{}] struct {
 func (wrapper *HttpWrapper[R, E]) Serve(w http.ResponseWriter, r *http.Request) error {
 	request := new(R)
 
+	// TODO: Refactor request parsers on its own function
 	for _, parser := range wrapper.RequestParsers {
 		err := parser(request, r)
 		if err != nil {
@@ -31,6 +32,7 @@ func (wrapper *HttpWrapper[R, E]) Serve(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
+	// TODO: Refactor validated request on its own function
 	if wrapper.ValidateRequest != nil {
 		errorMessages := wrapper.ValidateRequest(request)
 		if errorMessages != "" {
