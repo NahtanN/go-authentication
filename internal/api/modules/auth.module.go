@@ -6,6 +6,7 @@ import (
 	"github.com/nahtann/go-lab/internal/handlers/auth_handlers/sign_up"
 	"github.com/nahtann/go-lab/internal/utils"
 	auth_utils "github.com/nahtann/go-lab/internal/utils/auth"
+	wrapper_utils "github.com/nahtann/go-lab/internal/utils/wrapper"
 	"github.com/nahtann/go-lab/internal/wrappers"
 )
 
@@ -37,7 +38,10 @@ func signInRoute(router *router.ApiRouter) {
 	}
 
 	httpWrapper := wrappers.HttpWrapper[sign_in.Request, auth_utils.Tokens]{
-		Handler:         &signIn,
+		Handler: &signIn,
+		RequestParsers: []wrappers.RequestParser[sign_in.Request]{
+			wrapper_utils.BodyParser[sign_in.Request],
+		},
 		ValidateRequest: utils.Validate,
 	}
 
@@ -63,7 +67,10 @@ func signUpRoute(router *router.ApiRouter) {
 	}
 
 	httpWrapper := wrappers.HttpWrapper[sign_up.Request, utils.DefaultResponse]{
-		Handler:         &signUp,
+		Handler: &signUp,
+		RequestParsers: []wrappers.RequestParser[sign_up.Request]{
+			wrapper_utils.BodyParser[sign_up.Request],
+		},
 		ValidateRequest: utils.Validate,
 	}
 
