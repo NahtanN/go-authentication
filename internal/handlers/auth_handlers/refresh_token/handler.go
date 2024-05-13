@@ -24,7 +24,6 @@ type Handler struct {
 func (handler *Handler) Exec(
 	request *Request,
 ) (*auth_utils.Tokens, error) {
-	// token, valid := middlewares.ValidateJWT(request.Token)
 	token, valid := handler.ValidateToken(request.Token)
 
 	if !valid || !token.Valid {

@@ -20,11 +20,19 @@ func (handler *UpdateHandler) UserTokens(
 	tokens, err := handler.CreateTokens(userId)
 	if err != nil {
 		return nil, &utils.CustomError{
-			Message: "Unable to generate access token.",
+			Message: "Unable to create tokens.",
 		}
 	}
 
-	_, err = handler.DB.Exec(
+	tx, err := handler.DB.Begin(context.Background())
+	if err != nil {
+		return nil, &utils.CustomError{
+			Message: "Unable to start transaction.",
+		}
+	}
+	defer tx.Rollback(context.Background())
+
+	_, err = tx.Exec(
 		context.Background(),
 		"INSERT INTO refresh_tokens (parent_token_id, token, user_id, expires_at) VALUES ($1, $2, $3, $4)",
 		parentTokenId,
@@ -33,16 +41,27 @@ func (handler *UpdateHandler) UserTokens(
 		tokens.RefreshTokenExpiration,
 	)
 	if err != nil {
-		return nil, err
+		return nil, &utils.CustomError{
+			Message: "Unable to save tokens.",
+		}
 	}
 
-	_, err = handler.DB.Exec(
+	_, err = tx.Exec(
 		context.Background(),
 		"UPDATE refresh_tokens SET used = true WHERE id = $1",
 		parentTokenId,
 	)
 	if err != nil {
-		return nil, err
+		return nil, &utils.CustomError{
+			Message: "Unable to update refresh token.",
+		}
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return nil, &utils.CustomError{
+			Message: "Unable to commit transaction.",
+		}
 	}
 
 	return tokens, nil
