@@ -1,13 +1,17 @@
 package current_user
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/pashagolub/pgxmock/v3"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/nahtann/go-lab/internal/context_values"
 	"github.com/nahtann/go-lab/internal/storage/database/models"
 )
 
@@ -116,4 +120,51 @@ func TestCurrentUserParseDbData(t *testing.T) {
 	assert.NotNil(t, err)
 
 	assert.Equal(t, "Unable to parse current user data.", err.Error())
+}
+
+func TestRequestParser(t *testing.T) {
+	ctx := context.WithValue(
+		context.Background(),
+		context_values.UserIdKey,
+		float64(123),
+	)
+
+	request := Request{
+		ID: 1,
+	}
+
+	req, err := http.NewRequest("GET", "/current", bytes.NewBufferString(""))
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected while creating request", err)
+	}
+
+	req = req.WithContext(ctx)
+
+	err = RequestParser(&request, req)
+
+	assert.NoError(t, err)
+
+	assert.Equal(t, uint32(123), request.ID)
+}
+
+func TestRequestParserError(t *testing.T) {
+	ctx := context.WithValue(
+		context.Background(),
+		context_values.UserIdKey,
+		nil,
+	)
+
+	request := Request{}
+
+	req, err := http.NewRequest("GET", "/current", bytes.NewBufferString(""))
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected while creating request", err)
+	}
+
+	req = req.WithContext(ctx)
+
+	err = RequestParser(&request, req)
+
+	assert.NotNil(t, err)
+	assert.Equal(t, "Unable to fetch current user data.", err.Error())
 }

@@ -2,8 +2,10 @@ package modules
 
 import (
 	"github.com/nahtann/go-lab/internal/api/router"
+	"github.com/nahtann/go-lab/internal/handlers/auth_handlers/refresh_token"
 	"github.com/nahtann/go-lab/internal/handlers/auth_handlers/sign_in"
 	"github.com/nahtann/go-lab/internal/handlers/auth_handlers/sign_up"
+	"github.com/nahtann/go-lab/internal/middlewares"
 	"github.com/nahtann/go-lab/internal/utils"
 	auth_utils "github.com/nahtann/go-lab/internal/utils/auth"
 	wrapper_utils "github.com/nahtann/go-lab/internal/utils/wrapper"
@@ -15,11 +17,7 @@ const authRootRoute = "/auth"
 func AuthModule(router *router.ApiRouter) {
 	signInRoute(router)
 	signUpRoute(router)
-	/*router.SetRoute(*/
-	/*"POST",*/
-	/*utils.SetSubRoute(authRootRoute, "/refresh-token"),*/
-	/*auth_handlers.NewRefreshTokenHttpHandler(router.DB),*/
-	/*)*/
+	refreshTokenRoute(router)
 }
 
 // @Description	Authenticate user and returns access and refresh tokens.
@@ -77,6 +75,46 @@ func signUpRoute(router *router.ApiRouter) {
 	router.SetRoute(
 		"POST",
 		utils.SetSubRoute(authRootRoute, "/sign-up"),
+		&httpWrapper,
+	)
+}
+
+// @Description	Creates a new pair of access and refresh tokens.
+// @Tags			auth
+// @Accept			json
+// @Param			request	body	RefreshTokenRequest	true	"Request Body"
+// @Produce		json
+// @Success		201	{object}	auth_utils.Tokens
+// @Failure		401	{object}	utils.CustomError	"Message: 'Invalid Request'"
+// @router			/auth/refresh-token [post]
+func refreshTokenRoute(router *router.ApiRouter) {
+	invalidate := refresh_token.InvalidateHandler{
+		DB: router.DB,
+	}
+
+	update := refresh_token.UpdateHandler{
+		DB:           router.DB,
+		CreateTokens: auth_utils.CreateJwtTokens,
+	}
+
+	refreshToken := refresh_token.Handler{
+		DB:                     router.DB,
+		ValidateToken:          middlewares.ValidateJWT,
+		InvalidateTokensByUser: invalidate.TokensByUser,
+		UpdateUserTokens:       update.UserTokens,
+	}
+
+	httpWrapper := wrappers.HttpWrapper[refresh_token.Request, auth_utils.Tokens]{
+		Handler: &refreshToken,
+		RequestParsers: []wrappers.RequestParser[refresh_token.Request]{
+			wrapper_utils.BodyParser[refresh_token.Request],
+		},
+		ValidateRequest: utils.Validate,
+	}
+
+	router.SetRoute(
+		"POST",
+		utils.SetSubRoute(authRootRoute, "/refresh-token"),
 		&httpWrapper,
 	)
 }
