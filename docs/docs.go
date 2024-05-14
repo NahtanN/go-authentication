@@ -46,7 +46,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/auth_handlers.Tokens"
+                            "$ref": "#/definitions/auth_utils.Tokens"
                         }
                     },
                     "401": {
@@ -77,7 +77,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth_handlers.SigninRequest"
+                            "$ref": "#/definitions/sign_in.SigninRequest"
                         }
                     }
                 ],
@@ -85,7 +85,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/auth_handlers.Tokens"
+                            "$ref": "#/definitions/auth_utils.Tokens"
                         }
                     },
                     "400": {
@@ -116,7 +116,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth_handlers.SignupRequest"
+                            "$ref": "#/definitions/sign_up.SignupRequest"
                         }
                     }
                 ],
@@ -175,46 +175,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth_handlers.SigninRequest": {
-            "type": "object",
-            "required": [
-                "password",
-                "user"
-            ],
-            "properties": {
-                "password": {
-                    "type": "string",
-                    "example": "#Asdf123"
-                },
-                "user": {
-                    "type": "string",
-                    "example": "nahtann@outlook.com"
-                }
-            }
-        },
-        "auth_handlers.SignupRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "password",
-                "username"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "nahtann@outlook.com"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "#Asdf123"
-                },
-                "username": {
-                    "type": "string",
-                    "example": "NahtanN"
-                }
-            }
-        },
-        "auth_handlers.Tokens": {
+        "auth_utils.Tokens": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -241,6 +202,45 @@ const docTemplate = `{
                 "id": {
                     "type": "integer",
                     "example": 1
+                },
+                "username": {
+                    "type": "string",
+                    "example": "NahtanN"
+                }
+            }
+        },
+        "sign_in.SigninRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "user"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "#Asdf123"
+                },
+                "user": {
+                    "type": "string",
+                    "example": "nahtann@outlook.com"
+                }
+            }
+        },
+        "sign_up.SignupRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "nahtann@outlook.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "#Asdf123"
                 },
                 "username": {
                     "type": "string",

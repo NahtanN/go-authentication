@@ -32,6 +32,12 @@ func RunServer(port, rootPath string, swagger bool) {
 	}
 	defer dbpool.Close()
 
+	err = dbpool.Ping(context.Background())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable connect with the database: %v\n", err)
+		os.Exit(1)
+	}
+
 	mux := http.NewServeMux()
 
 	if swagger {

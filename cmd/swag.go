@@ -18,18 +18,20 @@ var swag = &cobra.Command{
 			err := exec.Command("/bin/sh", "-c", "swag fmt").Run()
 			if err != nil {
 				fmt.Printf("Error executing command: %s\n", err)
+				return
 			}
 
 			fmt.Println("Swagger files formatted successfully")
 		}
 
 		if build {
-			err := exec.Command("/bin/sh", "-c", "swag init").Run()
+			out, err := exec.Command("/bin/sh", "-c", "swag init").Output()
 			if err != nil {
 				fmt.Printf("Error executing command: %s\n", err)
+				return
 			}
 
-			fmt.Println("Swagger files created successfully")
+			fmt.Printf("Swagger files created successfully: %s\n", string(out))
 		}
 	},
 }
