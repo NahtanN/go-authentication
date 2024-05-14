@@ -3,13 +3,12 @@ package refresh_token
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
+	"github.com/nahtann/go-lab/internal/interfaces"
 	"github.com/nahtann/go-lab/internal/utils"
 )
 
 type InvalidateHandler struct {
-	DB *pgxpool.Pool
+	DB interfaces.Pgx
 }
 
 func (handler *InvalidateHandler) TokensByUser(
@@ -22,7 +21,7 @@ func (handler *InvalidateHandler) TokensByUser(
 	)
 	if err != nil {
 		return &utils.CustomError{
-			Message: "Invalid Request",
+			Message: "Invalid Request.",
 		}
 	}
 

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/nahtann/go-lab/internal/interfaces"
 	"github.com/nahtann/go-lab/internal/utils"
 	auth_utils "github.com/nahtann/go-lab/internal/utils/auth"
 )
@@ -15,7 +15,7 @@ type Request struct {
 }
 
 type Handler struct {
-	DB                     *pgxpool.Pool
+	DB                     interfaces.Pgx
 	ValidateToken          func(token string) (*jwt.Token, bool)
 	InvalidateTokensByUser func(userId uint32) error
 	UpdateUserTokens       func(userId, parentTokenId uint32) (*auth_utils.Tokens, error)
@@ -60,7 +60,7 @@ func (handler *Handler) Exec(
 		_ = handler.InvalidateTokensByUser(userId)
 
 		return nil, &utils.CustomError{
-			Message: "Invalid Request",
+			Message: "Invalid Request.",
 		}
 	}
 

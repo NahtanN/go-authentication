@@ -3,14 +3,13 @@ package refresh_token
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
+	"github.com/nahtann/go-lab/internal/interfaces"
 	"github.com/nahtann/go-lab/internal/utils"
 	auth_utils "github.com/nahtann/go-lab/internal/utils/auth"
 )
 
 type UpdateHandler struct {
-	DB           *pgxpool.Pool
+	DB           interfaces.Pgx
 	CreateTokens func(id uint32) (*auth_utils.Tokens, error)
 }
 
